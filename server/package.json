@@ -1,0 +1,19 @@
+{
+  "name": "symmetric-stats-server",
+  "version": "1.0.0",
+  "description": "Statistics server for SymmetricDS collecting data from symmetric_meta database",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "mysql2": "^3.9.1",
+    "dotenv": "^16.4.1",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.3"
+  }
+}
