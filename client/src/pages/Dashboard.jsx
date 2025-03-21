@@ -1,7 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Grid, Card, CardContent, Typography } from '@mui/material';
+import PropTypes from 'prop-types';
 import { fetchNodeStatus } from '../api/models/nodes';
 
+/**
+ * Dashboard component that displays node statistics
+ * @component
+ * @returns {JSX.Element} The rendered Dashboard component
+ */
 function Dashboard() {
   const [stats, setStats] = useState({
     totalNodes: 0,
@@ -15,36 +21,46 @@ function Dashboard() {
     const fetchStats = async () => {
       try {
         setError(null);
-        const data = await fetchNodeStatus();
-        const { nodeStatus, syncStats } = data;
+        const { nodeStatus, syncStats } = await fetchNodeStatus();
         
+        // Extract values with safer fallbacks
         const activeNodes = nodeStatus.find(status => status.status === 'Online')?.count || 0;
         const errorNodes = nodeStatus.find(status => status.status === 'Offline')?.count || 0;
         const pendingBatches = syncStats.find(stat => stat.name === 'NE')?.value || 0;
+        const totalNodes = nodeStatus.reduce((acc, curr) => acc + curr.count, 0);
         
         setStats({
-          totalNodes: nodeStatus.reduce((acc, curr) => acc + curr.count, 0),
+          totalNodes,
           activeNodes,
           errorNodes,
           pendingBatches
         });
       } catch (error) {
         console.error('Error fetching node status:', error);
-        setError(error.message);
-        setStats({
-          totalNodes: 0,
-          activeNodes: 0,
-          errorNodes: 0,
-          pendingBatches: 0
-        });
+        setError(error.message || 'Failed to fetch node status');
+        resetStats();
       }
     };
 
+    const resetStats = () => {
+      setStats({
+        totalNodes: 0,
+        activeNodes: 0,
+        errorNodes: 0,
+        pendingBatches: 0
+      });
+    };
+
+    // Initial fetch and set up polling
     fetchStats();
-    const interval = setInterval(fetchStats, 30000);
+    const POLLING_INTERVAL = 30000; // 30 seconds
+    const interval = setInterval(fetchStats, POLLING_INTERVAL);
+    
+    // Clean up interval on component unmount
     return () => clearInterval(interval);
   }, []);
 
+  // Define stat cards configuration
   const statCards = [
     { title: 'Total Nodes', value: stats.totalNodes },
     { title: 'Active Nodes', value: stats.activeNodes },
@@ -78,5 +94,14 @@ function Dashboard() {
     </>
   );
 }
+
+// Define StatCard PropTypes (for internal use)
+const StatCardPropTypes = {
+  title: PropTypes.string.isRequired,
+  value: PropTypes.number.isRequired
+};
+
+// Even though Dashboard doesn't receive props, defining empty propTypes is good practice
+Dashboard.propTypes = {};
 
 export default Dashboard;
