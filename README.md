@@ -70,7 +70,7 @@ DB_PORT=3306
 DB_USER=root
 DB_PASSWORD=your_password
 DB_NAME=symmetricds_meta
-PORT=3322
+PORT=13322
 ```
 
 4. Start the development servers
@@ -94,7 +94,66 @@ docker-compose up -d
 
 This will:
 - Build the Docker image with both client and server
-- Start the application with the server on port 3322 and the client on port 3333
+- Start the application with the server on port 13322 and the client on port 13333
+
+## Docker Hub
+
+The SymmetricDS Dashboard is also available as a Docker image on Docker Hub.
+
+### Using Docker Run
+
+You can run the application directly using Docker:
+
+```bash
+docker run -d \
+  --name symmetric-dashboard \
+  -p 13322:13322 \
+  -p 13333:13333 \
+  -e DB_HOST=your-db-host \
+  -e DB_PORT=3306 \
+  -e DB_USER=root \
+  -e DB_PASSWORD=your-password \
+  -e DB_NAME=symmetricds_meta \
+  softo/symmetric-dashboard:latest
+```
+
+### Using Docker Compose
+
+Create a `docker-compose.yml` file with the following content:
+
+```yaml
+version: '3.8'
+
+services:
+  symmetric-dashboard:
+    image: softo/symmetric-dashboard:latest
+    ports:
+      - "13322:13322"  # Server API port
+      - "13333:13333"  # Client web interface port
+    environment:
+      - DB_HOST=your-db-host
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_PASSWORD=your-password
+      - DB_NAME=symmetricds_meta
+    restart: unless-stopped
+```
+
+Then run:
+
+```bash
+docker-compose up -d
+```
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|--------|
+| DB_HOST | SymmetricDS database host | - |
+| DB_PORT | SymmetricDS database port | 3306 |
+| DB_USER | Database username | - |
+| DB_PASSWORD | Database password | - |
+| DB_NAME | SymmetricDS meta database name | symmetricds_meta |
 
 ## Usage
 

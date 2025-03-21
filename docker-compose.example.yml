@@ -9,8 +9,8 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "3322:3322"
-      - "3333:3333"
+      - "13322:13322"
+      - "13333:13333"
     environment:
       - DB_HOST=mysql
       - DB_PORT=3306

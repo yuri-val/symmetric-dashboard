@@ -30,6 +30,6 @@ WORKDIR /app
 COPY start.sh .
 RUN chmod +x start.sh
 
-EXPOSE 3322 80
+EXPOSE 13322 13322
 
 CMD ["./start.sh"]
