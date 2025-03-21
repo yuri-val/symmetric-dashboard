@@ -1,0 +1,28 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches:
+      - main  # or any branch you want to trigger the action
+      - master
+      - hot_fixes
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract repository name
+        run: echo "REPO_NAME=$(echo ${{ github.repository }} | cut -d'/' -f2)" >> $GITHUB_ENV
+
+      - name: Build and Push Docker Image
+        uses: yuri-val/build-and-push-docker-image-action@v1
+        with:
+          telegram_to: ${{ secrets.TELEGRAM_TO }}
+          telegram_token: ${{ secrets.TELEGRAM_TOKEN }}
+          docker_hub_username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          docker_hub_access_token: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+          docker_repo_name: ${{ env.REPO_NAME }}
+          github_token: ${{ secrets.PAT_TOKEN }}
