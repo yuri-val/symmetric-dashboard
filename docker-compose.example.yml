@@ -9,7 +9,6 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "13322:13322"
       - "13333:13333"
     environment:
       - DB_HOST=mysql
@@ -17,6 +16,7 @@ services:
       - DB_USER=root
       - DB_PASSWORD=root
       - DB_NAME=symmetricds_meta
+      - PORT=13322
 
   # rest services
 volumes:

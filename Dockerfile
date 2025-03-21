@@ -2,8 +2,11 @@ FROM node:22-alpine
 
 # Install PM2 globally and http-server instead of serve
 RUN npm install -g pm2 http-server serve
+RUN apk add --no-cache nginx
 
 WORKDIR /app
+
+COPY nginx.conf /etc/nginx/nginx.conf
 
 # Copy package files for both client and server
 COPY client/package*.json ./client/

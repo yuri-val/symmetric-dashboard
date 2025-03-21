@@ -4,9 +4,8 @@
 cd /app/server
 pm2 start src/index.js --name server
 
-# Serve the client build using http-server instead of serve
-cd /app/client
-pm2 start serve -- -s dist -l 13333 --name client
+# Start nginx to handle all requests
+nginx
 
 # Keep the container running and follow logs
-pm2 logs
+tail -f /var/log/nginx/error.log /var/log/nginx/access.log | pm2 logs --raw
