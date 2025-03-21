@@ -1,7 +1,7 @@
 FROM node:22-alpine
 
 # Install PM2 globally and http-server instead of serve
-RUN npm install -g pm2 http-server
+RUN npm install -g pm2 http-server serve
 
 WORKDIR /app
 
