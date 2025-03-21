@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+
+  # some services
+
+  symmetric-dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3322:3322"
+      - "3333:3333"
+    environment:
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_PASSWORD=root
+      - DB_NAME=symmetricds_meta
+
+  # rest services
+volumes:
+  mysql_data:
