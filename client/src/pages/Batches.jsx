@@ -119,7 +119,7 @@ function Batches() {
             <Typography variant="h6" component="div" align="center">
               {statData[status]}
             </Typography>
-            <Typography variant="body2" color="text.secondary" align="center">
+            <Typography variant="body2" component="div" color="text.secondary" align="center">
               <Chip
                 label={getStatusLabel(status)}
                 color={getStatusColor(status)}

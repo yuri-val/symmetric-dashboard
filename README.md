@@ -163,7 +163,7 @@ docker-compose up -d
 Once running, access the dashboard at:
 
 - Development: http://localhost:5173 (or the port shown in your Vite output)
-- Docker deployment: http://localhost:3333
+- Docker deployment: http://localhost:13333
 
 ## API Endpoints
 
@@ -171,7 +171,9 @@ The server provides the following API endpoints:
 
 - `GET /api/node/status` - Get node status statistics
 - `GET /api/node/nodes` - Get list of all nodes
+- `GET /api/engine/config` - Get configuration (node groups, channels, and triggers)
 - `GET /api/batch/status` - Get batch processing status
+- `GET /health` - Health check endpoint
 
 ## Technology Stack
 

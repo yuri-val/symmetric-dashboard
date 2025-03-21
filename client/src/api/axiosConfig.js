@@ -1,7 +1,9 @@
 import axios from 'axios';
 
+const API_PATH = import.meta.env.VITE_API_PATH || 'http://localhost:13322/api';
+
 const axiosInstance = axios.create({
-  baseURL: 'http://localhost:13322/api',
+  baseURL: API_PATH,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json'
