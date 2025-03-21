@@ -114,6 +114,7 @@ docker run -d \
   -e DB_USER=root \
   -e DB_PASSWORD=your-password \
   -e DB_NAME=symmetricds_meta \
+  -e PORT=13322 \
   softo/symmetric-dashboard:latest
 ```
 
@@ -136,6 +137,7 @@ services:
       - DB_USER=root
       - DB_PASSWORD=your-password
       - DB_NAME=symmetricds_meta
+      - PORT=13322
     restart: unless-stopped
 ```
 
@@ -154,6 +156,7 @@ docker-compose up -d
 | DB_USER | Database username | - |
 | DB_PASSWORD | Database password | - |
 | DB_NAME | SymmetricDS meta database name | symmetricds_meta |
+| PORT | Server port | 13322 |
 
 ## Usage
 

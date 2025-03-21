@@ -9,7 +9,7 @@ import {
   ListItemText,
   Divider,
 } from '@mui/material';
-import axios from 'axios';
+import { fetchEngineConfig } from '../api/models/engine';
 
 function Configuration() {
   const [config, setConfig] = useState({
@@ -21,8 +21,8 @@ function Configuration() {
   useEffect(() => {
     const fetchConfig = async () => {
       try {
-        const response = await axios.get('/api/engine/config');
-        setConfig(response.data);
+        const response = await fetchEngineConfig();
+        setConfig(response);
       } catch (error) {
         console.error('Error fetching configuration:', error);
       }

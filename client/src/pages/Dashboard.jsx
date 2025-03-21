@@ -15,7 +15,8 @@ function Dashboard() {
     const fetchStats = async () => {
       try {
         setError(null);
-        const { nodeStatus, syncStats } = await fetchNodeStatus();
+        const data = await fetchNodeStatus();
+        const { nodeStatus, syncStats } = data;
         
         const activeNodes = nodeStatus.find(status => status.status === 'Online')?.count || 0;
         const errorNodes = nodeStatus.find(status => status.status === 'Offline')?.count || 0;

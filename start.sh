@@ -2,7 +2,7 @@
 
 # Start the server
 cd /app/server
-pm2 start src/index.js -p 13322 --name server
+pm2 start src/index.js --name server
 
 # Serve the client build using http-server instead of serve
 cd /app/client

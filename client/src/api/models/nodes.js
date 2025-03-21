@@ -21,10 +21,7 @@ export const fetchNodes = async () => {
 export const fetchNodeStatus = async () => {
   try {
     const data = await axiosInstance.get('/node/status');
-    return {
-      nodeStatus: data.nodeStatus,
-      syncStats: data.syncStats
-    };
+    return data;
   } catch (error) {
     console.error('Error fetching node status:', error.message);
     throw error;

@@ -73,6 +73,20 @@ function Nodes() {
     );
   };
 
+  // Add this function near the top of the component, after the useState declarations
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Never';
+    const date = new Date(dateString);
+    return date.toLocaleString('en-GB', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    }).replace(',', '');
+  };
+
   return (
     <>
       <Typography variant="h4" gutterBottom>
@@ -125,9 +139,7 @@ function Nodes() {
                     {formatMemoryUsage(node.memoryUsage)}
                   </TableCell>
                   <TableCell>
-                    {node.lastHeartbeat
-                      ? new Date(node.lastHeartbeat).toLocaleString()
-                      : 'Never'}
+                    {formatDate(node.lastHeartbeat)}
                   </TableCell>
                   <TableCell>{node.version || 'N/A'}</TableCell>
                   <TableCell>{node.batchInErrorCount >= 0 ? node.batchInErrorCount : 'N/A'}</TableCell>
