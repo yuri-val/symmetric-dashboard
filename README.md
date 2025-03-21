@@ -31,7 +31,7 @@ The application consists of two main components:
 - Recharts for data visualization
 - Axios for API communication
 
-## Prerequisites
+## System Requirements
 
 - Node.js (v14 or higher)
 - Access to a SymmetricDS meta database
@@ -77,9 +77,11 @@ PORT=13322
 
 ```bash
 # Start the server (from the server directory)
+cd ../server
 npm run dev
 
-# Start the client (from the client directory)
+# Start the client (from the client directory, in a new terminal)
+cd ../client
 npm run dev
 ```
 
@@ -87,8 +89,17 @@ npm run dev
 
 The application can be deployed using Docker:
 
+1. Create a `docker-compose.yml` file based on the example provided:
+
 ```bash
-# Build and start the containers
+cp docker-compose.example.yml docker-compose.yml
+```
+
+2. Edit the environment variables in the docker-compose.yml file to match your SymmetricDS database configuration
+
+3. Build and start the containers
+
+```bash
 docker-compose up -d
 ```
 
@@ -107,7 +118,6 @@ You can run the application directly using Docker:
 ```bash
 docker run -d \
   --name symmetric-dashboard \
-  -p 13322:13322 \
   -p 13333:13333 \
   -e DB_HOST=your-db-host \
   -e DB_PORT=3306 \
@@ -129,8 +139,7 @@ services:
   symmetric-dashboard:
     image: softo/symmetric-dashboard:latest
     ports:
-      - "13322:13322"  # Server API port
-      - "13333:13333"  # Client web interface port
+      - "13333:13333"  # Web interface port
     environment:
       - DB_HOST=your-db-host
       - DB_PORT=3306
@@ -151,12 +160,12 @@ docker-compose up -d
 
 | Variable | Description | Default |
 |----------|-------------|--------|
-| DB_HOST | SymmetricDS database host | - |
+| DB_HOST | SymmetricDS database host | localhost |
 | DB_PORT | SymmetricDS database port | 3306 |
-| DB_USER | Database username | - |
+| DB_USER | Database username | root |
 | DB_PASSWORD | Database password | - |
-| DB_NAME | SymmetricDS meta database name | symmetricds_meta |
-| PORT | Server port | 13322 |
+| DB_NAME | SymmetricDS meta database name | symmetric |
+| PORT | Server API port | 13322 |
 
 ## Usage
 
@@ -165,15 +174,22 @@ Once running, access the dashboard at:
 - Development: http://localhost:5173 (or the port shown in your Vite output)
 - Docker deployment: http://localhost:13333
 
+### Dashboard Sections
+
+1. **Overview**: The main dashboard showing key metrics and statistics
+2. **Nodes**: List of all nodes with their status and synchronization information
+3. **Batches**: Monitor incoming and outgoing batches with detailed status
+4. **Configuration**: View system configuration including node groups, channels, and triggers
+
 ## API Endpoints
 
 The server provides the following API endpoints:
 
+- `GET /health` - Health check endpoint
 - `GET /api/node/status` - Get node status statistics
 - `GET /api/node/nodes` - Get list of all nodes
 - `GET /api/engine/config` - Get configuration (node groups, channels, and triggers)
 - `GET /api/batch/status` - Get batch processing status
-- `GET /health` - Health check endpoint
 
 ## Technology Stack
 
@@ -182,14 +198,70 @@ The server provides the following API endpoints:
 - Express
 - MySQL2 (for database connectivity)
 - Dotenv (for environment configuration)
+- CORS (for cross-origin resource sharing)
 
 ### Frontend
-- React
+- React 18
 - Vite (build tool)
 - Material UI
 - React Router
 - Recharts (for charts and visualizations)
 - Axios (for API requests)
+- TanStack React Query (for data fetching and caching)
+
+### Deployment
+- Docker
+- Nginx (for serving the frontend and proxying API requests)
+- PM2 (for process management in production)
+
+## Project Structure
+
+```
+├── client/                 # Frontend React application
+│   ├── public/             # Static assets
+│   └── src/                # React source code
+│       ├── api/            # API client functions
+│       ├── components/     # Reusable UI components
+│       ├── pages/          # Page components
+│       ├── App.jsx         # Main application component
+│       └── main.jsx        # Application entry point
+├── server/                 # Backend Node.js application
+│   └── src/                # Server source code
+│       ├── controllers/    # API route handlers
+│       ├── repositories/   # Database access layer
+│       ├── services/       # Business logic
+│       └── index.js        # Server entry point
+├── .github/                # GitHub workflows
+├── Dockerfile              # Docker build configuration
+├── docker-compose.example.yml # Example Docker Compose configuration
+├── nginx.conf             # Nginx configuration for production
+└── start.sh               # Container startup script
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Database Connection Errors**
+   - Verify your database credentials in the .env file
+   - Ensure the SymmetricDS database is running and accessible
+   - Check network connectivity between the application and database
+
+2. **Docker Deployment Issues**
+   - Ensure ports 13322 and 13333 are not in use by other applications
+   - Verify Docker and Docker Compose are installed correctly
+   - Check Docker logs: `docker logs symmetric-dashboard`
+
+3. **Development Server Issues**
+   - Clear node_modules and reinstall dependencies if you encounter module errors
+   - Ensure you're using a compatible Node.js version
+
+## Security Considerations
+
+- The application does not implement authentication by default
+- Consider placing the application behind a reverse proxy with authentication
+- Never expose the dashboard directly to the internet without proper security measures
+- Use environment variables for all sensitive configuration and never commit credentials
 
 ## License
 
