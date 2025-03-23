@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_PATH = import.meta.env.VITE_API_PATH || 'http://localhost:13322/api';
+const API_PATH = import.meta.env.VITE_API_PATH || '/api';
 
 const axiosInstance = axios.create({
   baseURL: API_PATH,
