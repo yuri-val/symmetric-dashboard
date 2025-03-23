@@ -1,28 +1,25 @@
-import { useState, useEffect } from 'react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Typography,
-  Chip,
-  Box,
-  Tabs,
-  Tab,
-  Grid,
-  Card,
-  CardContent,
-} from '@mui/material';
+import { useState, useEffect, useContext } from 'react';
+import { Typography, Box, Container, Paper, Grid } from '@mui/material';
+import { motion } from 'framer-motion';
+import { ThemeContext } from '../context/ThemeContext';
 import { fetchBatchStatus } from '../api/models/batches';
+import BatchTabs from '../components/batches/BatchTabs';
+import BatchTable from '../components/batches/BatchTable';
+import StatusCardList from '../components/batches/StatusCardList';
 
+import './Batches.css';
+
+/**
+ * Batches page component that displays batch status and data
+ * @component
+ * @returns {JSX.Element} The rendered Batches page
+ */
 function Batches() {
   const [batches, setBatches] = useState({ incoming: [], outgoing: [] });
   const [error, setError] = useState(null);
   const [tabValue, setTabValue] = useState(0);
   const [stats, setStats] = useState({ incoming: {}, outgoing: {} });
+  const { theme } = useContext(ThemeContext);
 
   useEffect(() => {
     const fetchBatches = async () => {
@@ -52,186 +49,106 @@ function Batches() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleTabChange = (event, newValue) => {
+  const handleTabChange = (newValue) => {
     setTabValue(newValue);
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'ERROR':
-      case 'ER':
-        return 'error';
-      case 'OK':
-        return 'success';
-      case 'NE':
-      case 'QE':
-      case 'SE':
-      case 'LD':
-      case 'RT':
-        return 'warning';
-      default:
-        return 'default';
+  // Page animation variants
+  const pageVariants = {
+    initial: { opacity: 0 },
+    animate: { 
+      opacity: 1,
+      transition: { 
+        duration: 0.5,
+        staggerChildren: 0.1 
+      }
     }
   };
 
-  const getStatusLabel = (status) => {
-    switch (status) {
-      case 'NE': return 'New';
-      case 'QE': return 'Queued';
-      case 'SE': return 'Sending';
-      case 'ER': return 'Error';
-      case 'OK': return 'OK';
-      case 'LD': return 'Loading';
-      case 'RT': return 'Routing';
-      default: return status;
-    }
+  const itemVariants = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 }
   };
-
-  const renderStatCards = (direction) => {
-    const statData = stats[direction];
-    const statKeys = Object.keys(statData);
-    
-    if (statKeys.length === 0) {
-      return (
-        <Grid item xs={12}>
-          <Card>
-            <CardContent>
-              <Typography variant="body2" color="text.secondary" align="center">
-                No {direction} batches found
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      );
-    }
-    
-    return statKeys.map(status => (
-      <Grid item xs={6} sm={4} md={3} lg={2} key={`${direction}-${status}`}>
-        <Card 
-          sx={{ 
-            height: '100%',
-            borderLeft: `4px solid ${getStatusColor(status) === 'default' ? '#9e9e9e' : ''}`,
-            borderColor: getStatusColor(status) !== 'default' ? 
-              theme => theme.palette[getStatusColor(status)].main : undefined
-          }}
-        >
-          <CardContent>
-            <Typography variant="h6" component="div" align="center">
-              {statData[status]}
-            </Typography>
-            <Typography variant="body2" component="div" color="text.secondary" align="center">
-              <Chip
-                label={getStatusLabel(status)}
-                color={getStatusColor(status)}
-                size="small"
-                sx={{ mt: 1 }}
-              />
-            </Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-    ));
-  };
-
-  const renderBatchTable = (batchList, direction) => (
-    <TableContainer component={Paper}>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell>Batch ID</TableCell>
-            <TableCell>Node ID</TableCell>
-            <TableCell>Channel</TableCell>
-            <TableCell>Status</TableCell>
-            <TableCell>Error Flag</TableCell>
-            <TableCell>Byte Count</TableCell>
-            <TableCell>Created</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {batchList.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={7} align="center">
-                No {direction} batches found
-              </TableCell>
-            </TableRow>
-          ) : (
-            batchList.map((batch) => (
-              <TableRow key={`${batch.batchId}-${batch.nodeId}`}>
-                <TableCell>{batch.batchId}</TableCell>
-                <TableCell>{batch.nodeId}</TableCell>
-                <TableCell>{batch.channelId}</TableCell>
-                <TableCell>
-                  <Chip
-                    label={getStatusLabel(batch.status)}
-                    color={getStatusColor(batch.status)}
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell>
-                  <Chip
-                    label={batch.errorFlag ? 'Yes' : 'No'}
-                    color={batch.errorFlag ? 'error' : 'success'}
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell>{batch.byteCount}</TableCell>
-                <TableCell>
-                  {new Date(batch.createTime).toLocaleString()}
-                </TableCell>
-              </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
-    </TableContainer>
-  );
 
   return (
-    <>
-      <Typography variant="h4" gutterBottom>
-        Batches
-      </Typography>
-      {error ? (
-        <Typography color="error" gutterBottom>
-          {error}
-        </Typography>
-      ) : (
-        <Box sx={{ width: '100%' }}>
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
-              <Box sx={{ mb: 4 }}>
-                <Typography variant="h6" gutterBottom>
-                  Outgoing Batch Status
-                </Typography>
-                <Grid container spacing={2}>
-                  {renderStatCards('outgoing')}
-                </Grid>
-              </Box>
+    <Container maxWidth="xl">
+      <motion.div
+        initial="initial"
+        animate="animate"
+        variants={pageVariants}
+      >
+        <motion.div variants={itemVariants}>
+          <Typography variant="h4" gutterBottom>
+            Batches
+          </Typography>
+        </motion.div>
+        
+        {error ? (
+          <motion.div variants={itemVariants}>
+            <Paper 
+              elevation={2} 
+              sx={{ 
+                p: 2, 
+                mb: 3, 
+                backgroundColor: theme === 'dark' ? 'rgba(30, 30, 30, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+                borderLeft: '4px solid',
+                borderColor: 'error.main'
+              }}
+            >
+              <Typography color="error" gutterBottom>
+                {error}
+              </Typography>
+            </Paper>
+          </motion.div>
+        ) : (
+          <Box sx={{ width: '100%' }}>
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <motion.div variants={itemVariants}>
+                  <StatusCardList 
+                    stats={stats} 
+                    direction="outgoing" 
+                    title="Outgoing Batch Status" 
+                  />
+                </motion.div>
+              </Grid>
+              
+              <Grid item xs={12} md={6}>
+                <motion.div variants={itemVariants}>
+                  <StatusCardList 
+                    stats={stats} 
+                    direction="incoming" 
+                    title="Incoming Batch Status" 
+                  />
+                </motion.div>
+              </Grid>
             </Grid>
             
-            <Grid item xs={12} md={6}>
-              <Box sx={{ mb: 4 }}>
-                <Typography variant="h6" gutterBottom>
-                  Incoming Batch Status
-                </Typography>
-                <Grid container spacing={2}>
-                  {renderStatCards('incoming')}
-                </Grid>
-              </Box>
-            </Grid>
-          </Grid>
-          
-          <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
-            <Tabs value={tabValue} onChange={handleTabChange} aria-label="batch direction tabs">
-              <Tab label={`Outgoing (last ${batches.outgoing?.length || 0})`} />
-              <Tab label={`Incoming (last ${batches.incoming?.length || 0})`} />
-            </Tabs>
+            <motion.div variants={itemVariants}>
+              <BatchTabs 
+                batches={batches} 
+                onTabChange={handleTabChange} 
+              />
+            </motion.div>
+            
+            <motion.div variants={itemVariants}>
+              {tabValue === 0 && (
+                <BatchTable 
+                  batchList={batches.outgoing || []} 
+                  direction="outgoing" 
+                />
+              )}
+              {tabValue === 1 && (
+                <BatchTable 
+                  batchList={batches.incoming || []} 
+                  direction="incoming" 
+                />
+              )}
+            </motion.div>
           </Box>
-          {tabValue === 0 && renderBatchTable(batches.outgoing || [], 'outgoing')}
-          {tabValue === 1 && renderBatchTable(batches.incoming || [], 'incoming')}
-        </Box>
-      )}
-    </>
+        )}
+      </motion.div>
+    </Container>
   );
 }
 

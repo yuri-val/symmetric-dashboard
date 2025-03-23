@@ -1,0 +1,95 @@
+/* Batches Component Styles */
+
+/* Batches container */
+.batches-container {
+  width: 100%;
+  padding: var(--space-md);
+}
+
+/* Bento Grid Layout for Batch Stats */
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--space-md);
+  width: 100%;
+  margin-top: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .bento-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-sm);
+  }
+}
+
+@media (min-width: 601px) and (max-width: 960px) {
+  .bento-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 961px) and (max-width: 1280px) {
+  .bento-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (min-width: 1281px) {
+  .bento-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+/* Batch Card Styles */
+.bento-item {
+  background-color: var(--surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+  height: 100%;
+}
+
+.bento-item:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow);
+}
+
+/* Table styles */
+.table-container {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  margin-top: var(--space-md);
+  transition: all var(--transition-normal);
+}
+
+/* Tab styles */
+.tabs-container {
+  margin-bottom: var(--space-md);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  overflow: hidden;
+}
+
+/* Loading and error states */
+.loading-container,
+.error-container {
+  padding: var(--space-lg);
+  text-align: center;
+  border-radius: var(--radius-md);
+  margin: var(--space-md) 0;
+}
+
+.error-container {
+  background-color: var(--error-bg);
+  color: var(--error-text);
+}
+
+/* Animation for skeleton loading */
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
