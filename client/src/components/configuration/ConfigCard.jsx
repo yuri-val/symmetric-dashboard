@@ -19,7 +19,7 @@ const ConfigCard = ({ title, children, ariaLabel }) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+      animate={{ opacity: 1, y: 0, width: 'fit-content' }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.4 }}
       whileHover={{ scale: 1.02, boxShadow: 'var(--shadow)' }}

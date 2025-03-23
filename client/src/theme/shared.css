@@ -110,7 +110,14 @@ body {
     color: var(--text-primary);
   }
 
-  th.MuiTableCell-root, td.MuiTableCell-root {
+  .Mui-selected .MuiTypography-root.MuiListItemText-primary {
+    color: #fff;
+    font-weight: 600;
+  }
+
+  
+
+  th.MuiTableCell-root, td.MuiTableCell-root, .MuiBox-root {
     color: var(--text-primary);
   }
 }
