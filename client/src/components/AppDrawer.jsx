@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import React, { useContext, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import {
@@ -7,64 +7,52 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  IconButton,
   styled,
   Typography,
   Box,
+  useMediaQuery,
 } from '@mui/material';
 import {
-  Menu as MenuIcon,
   Dashboard as DashboardIcon,
   Hub as HubIcon,
   Sync as SyncIcon,
   Settings as SettingsIcon,
 } from '@mui/icons-material';
+import { motion } from 'framer-motion';
+import { ThemeContext } from '../context/ThemeContext';
 
 const drawerWidth = 260;
 
-const StyledDrawer = styled(Drawer)(({ theme }) => ({
+// Styled components with theme support
+const StyledDrawer = styled(Drawer, { shouldForwardProp: (prop) => prop !== '$isDarkMode' })(({ theme, $isDarkMode }) => ({
   width: drawerWidth,
   flexShrink: 0,
   '& .MuiDrawer-paper': {
     width: drawerWidth,
     boxSizing: 'border-box',
     marginTop: 64,
-    background: 'rgba(255, 255, 255, 0.8)',
+    background: $isDarkMode 
+      ? 'rgba(18, 18, 18, 0.85)' 
+      : 'rgba(255, 255, 255, 0.8)',
     backdropFilter: 'blur(10px)',
-    boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+    boxShadow: $isDarkMode
+      ? '0 8px 32px 0 rgba(0, 0, 0, 0.5)'
+      : '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
     border: 'none',
+    color: $isDarkMode ? '#ffffff' : theme.palette.text.primary,
   },
 }));
 
-const StyledListItem = styled(ListItem)(({ theme }) => ({
-  margin: theme.spacing(1, 2),
-  borderRadius: theme.shape.borderRadius,
-  width: 'unset',
-  transition: 'all 0.3s ease',
-  '&:hover': {
-    backgroundColor: 'rgba(0, 0, 0, 0.04)',
-    transform: 'translateY(-2px)',
-    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)',
-  },
-  '&.Mui-selected': {
-    backgroundColor: theme.palette.primary.main,
-    color: theme.palette.primary.contrastText,
-    '&:hover': {
-      backgroundColor: theme.palette.primary.dark,
-    },
-    '& .MuiListItemIcon-root': {
-      color: theme.palette.primary.contrastText,
-    },
-  },
+const DrawerHeader = styled(Box, { shouldForwardProp: (prop) => prop !== '$isDarkMode' })(({ theme, $isDarkMode }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  padding: theme.spacing(2),
+  borderBottom: $isDarkMode 
+    ? '1px solid rgba(255, 255, 255, 0.1)' 
+    : '1px solid rgba(0, 0, 0, 0.05)',
 }));
 
-const StyledIconButton = styled(IconButton)(({ theme }) => ({
-  backgroundColor: theme.palette.background.paper,
-  boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)',
-  '&:hover': {
-    backgroundColor: theme.palette.grey[100],
-  },
-}));
 const menuItems = [
   { text: 'Dashboard', icon: DashboardIcon, path: '/' },
   { text: 'Nodes', icon: HubIcon, path: '/nodes' },
@@ -76,60 +64,133 @@ const menuItems = [
  * AppDrawer component for navigation
  * @component
  */
-function AppDrawer({ initialOpen = true }) {
-  const [open, setOpen] = useState(initialOpen);
+const AppDrawer = React.memo(function AppDrawer() {
+  const [error] = React.useState(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const { theme } = useContext(ThemeContext);
+  const isDarkMode = theme === 'dark';
+  const isMobile = useMediaQuery('(max-width:768px)');
 
-  const handleDrawerToggle = () => setOpen(!open);
+  const handleNavigation = useCallback((path) => {
+    try {
+      navigate(path);
+    } catch (err) {
+      console.error('Navigation error:', err);
+      setError('Navigation failed. Please try again.');
+    }
+  }, [navigate]);
 
-  const drawerContent = useMemo(() => (
-    <List>
-      {menuItems.map(({ text, icon: Icon, path }) => (
-        <StyledListItem
-          button
-          key={text}
-          onClick={() => navigate(path)}
-          selected={location.pathname === path}
-        >
-          <ListItemIcon>
-            <Icon color={location.pathname === path ? 'inherit' : 'primary'} />
-          </ListItemIcon>
-          <ListItemText primary={text} />
-        </StyledListItem>
-      ))}
-    </List>
-  ), [location.pathname, navigate]);
+  // Animation variants
+  const listItemVariants = {
+    hidden: { opacity: 0, x: -20 },
+    visible: (i) => ({ 
+      opacity: 1, 
+      x: 0, 
+      transition: { delay: i * 0.1, duration: 0.5 } 
+    }),
+    hover: { 
+      scale: 1.03, 
+      boxShadow: isDarkMode 
+        ? '0 4px 12px rgba(0, 0, 0, 0.3)' 
+        : '0 4px 12px rgba(0, 0, 0, 0.15)',
+      y: -2
+    },
+    tap: { scale: 0.98 }
+  };
 
   return (
-    <>
-      <StyledIconButton
-        color="primary"
-        aria-label="toggle drawer"
-        onClick={handleDrawerToggle}
-        edge="start"
-        sx={{
-          position: 'fixed',
-          left: 16,
-          top: 10,
-          zIndex: 1300,
-        }}
-      >
-        <MenuIcon />
-      </StyledIconButton>
-      <StyledDrawer
-        variant="persistent"
-        anchor="left"
-        open={open}
-      >
-        {drawerContent}
-      </StyledDrawer>
-    </>
+    <StyledDrawer
+      variant="permanent"
+      anchor="left"
+      open={true}
+      $isDarkMode={isDarkMode}
+      PaperProps={{
+        component: motion.div,
+        initial: { opacity: 0 },
+        animate: { opacity: 1 },
+        transition: { duration: 0.5 },
+        id: "navigation-drawer",
+        role: "navigation",
+        "aria-label": "Main navigation"
+      }}
+    >
+      <DrawerHeader $isDarkMode={isDarkMode}>
+        <Typography variant="h6" component="div">
+          Navigation
+        </Typography>
+      </DrawerHeader>
+      
+      {error && (
+        <Box 
+          sx={{ 
+            m: 2, 
+            p: 2, 
+            borderRadius: 1, 
+            bgcolor: isDarkMode ? 'rgba(220, 53, 69, 0.2)' : 'rgba(220, 53, 69, 0.1)',
+            color: isDarkMode ? '#ff8a8a' : '#dc3545'
+          }}
+          role="alert"
+          aria-live="polite"
+        >
+          <Typography variant="body2">
+            😕 Oops, something's off—try again!
+          </Typography>
+          <Typography variant="caption">
+            {error}
+          </Typography>
+        </Box>
+      )}
+      
+      <List>
+        {menuItems.map(({ text, icon: Icon, path }, i) => {
+          const isSelected = location.pathname === path;
+          return (
+            <motion.div
+              key={text}
+              custom={i}
+              initial="hidden"
+              animate="visible"
+              whileHover="hover"
+              whileTap="tap"
+              variants={listItemVariants}
+              style={{
+                margin: '8px 16px',
+                borderRadius: '4px',
+                backgroundColor: isSelected
+                  ? (isDarkMode ? '#1976d2' : '#3f51b5')
+                  : 'transparent',
+                color: isSelected
+                  ? '#ffffff'
+                  : isDarkMode ? '#ffffff' : 'inherit',
+              }}
+            >
+              <ListItem
+                button
+                onClick={() => handleNavigation(path)}
+                selected={isSelected}
+                aria-current={isSelected ? 'page' : undefined}
+                role="menuitem"
+                tabIndex={0}
+                sx={{ borderRadius: 1 }}
+              >
+                <ListItemIcon sx={{
+                  color: isSelected
+                    ? '#ffffff'
+                    : isDarkMode ? '#ffffff' : '#3f51b5'
+                }}>
+                  <Icon />
+                </ListItemIcon>
+                <ListItemText primary={text} />
+              </ListItem>
+            </motion.div>
+          );
+        })}
+      </List>
+    </StyledDrawer>
   );
-}
+});
 
-AppDrawer.propTypes = {
-  initialOpen: PropTypes.bool,
-};
+AppDrawer.propTypes = {};
 
 export default AppDrawer;
