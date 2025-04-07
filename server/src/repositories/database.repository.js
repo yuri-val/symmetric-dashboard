@@ -23,12 +23,35 @@ class DatabaseRepository {
    * @param {string} query - SQL query to execute
    * @param {Array} [params=[]] - Query parameters
    * @returns {Promise<Array>} Query results
+   * @throws {Error} If query execution fails
    */
   async executeQuery(query, params = []) {
     const startTime = Date.now();
-    const [results] = await this.pool.query(query, params);
-    logger.logQuery(query, params, Date.now() - startTime, results);
-    return results;
+    try {
+      logger.debug('Executing SQL query', { query, params });
+      const [results] = await this.pool.query(query, params);
+      const duration = Date.now() - startTime;
+      
+      logger.logQuery(query, params, duration, results);
+      
+      if (duration > 1000) {
+        // Log slow queries with a warning
+        logger.debug('Slow query detected', { query, duration, params });
+      }
+      
+      return results;
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      logger.error(`Database query failed: ${error.message}`, {
+        query,
+        params,
+        duration,
+        code: error.code,
+        sqlState: error.sqlState,
+        stack: error.stack
+      });
+      throw error;
+    }
   }
 
   /**

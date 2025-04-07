@@ -7,6 +7,16 @@ const DatabaseRepository = require('../repositories/database.repository');
 const logger = require('../logger');
 
 /**
+ * Batch directions enum
+ * @readonly
+ * @enum {string}
+ */
+const DIRECTION = Object.freeze({
+  INCOMING: 'incoming',
+  OUTGOING: 'outgoing'
+});
+
+/**
  * Service class for batch operations
  * @class BatchService
  */
@@ -35,6 +45,8 @@ class BatchService {
   async getBatchStatus(filters = {}) {
     try {
       const { incomingStatus, outgoingStatus } = filters;
+      
+      logger.debug('Fetching batch status', { filters });
 
       const [
         outgoingBatches,
@@ -42,22 +54,34 @@ class BatchService {
         outgoingStats,
         incomingStats
       ] = await Promise.all([
-        this.fetchBatches('outgoing', outgoingStatus),
-        this.fetchBatches('incoming', incomingStatus),
-        this.fetchBatchStats('outgoing'),
-        this.fetchBatchStats('incoming')
+        this.fetchBatches(DIRECTION.OUTGOING, outgoingStatus),
+        this.fetchBatches(DIRECTION.INCOMING, incomingStatus),
+        this.fetchBatchStats(DIRECTION.OUTGOING),
+        this.fetchBatchStats(DIRECTION.INCOMING)
       ]);
 
+      // Use bind to ensure correct 'this' context for the callback functions
+      const transformBatch = this.transformBatch.bind(this);
+      
+      logger.debug('Batch data retrieved successfully', { 
+        outgoingCount: outgoingBatches.length,
+        incomingCount: incomingBatches.length
+      });
+
       return {
-        outgoing: outgoingBatches.map(this.transformBatch),
-        incoming: incomingBatches.map(this.transformBatch),
+        outgoing: outgoingBatches.map(transformBatch),
+        incoming: incomingBatches.map(transformBatch),
         stats: {
           outgoing: this.transformStats(outgoingStats),
           incoming: this.transformStats(incomingStats)
         }
       };
     } catch (error) {
-      logger.error('Error in getBatchStatus:', error);
+      logger.error('Error in getBatchStatus', { 
+        error: error.message,
+        stack: error.stack,
+        filters
+      });
       throw error;
     }
   }
@@ -72,16 +96,18 @@ class BatchService {
    */
   async fetchBatches(type, status) {
     const tableName = `sym_${type}_batch`;
-    let query = `SELECT * FROM ${tableName}`;
     const params = [];
-
+    
+    let query = `SELECT * FROM ${tableName}`;
+    
     if (status) {
       query += ' WHERE status = ?';
       params.push(status);
     }
 
     query += ' ORDER BY create_time DESC LIMIT 100';
-
+    
+    logger.debug('Fetching batches', { type, status, query });
     return this.database.executeQuery(query, params);
   }
 
@@ -131,6 +157,221 @@ class BatchService {
       acc[curr.status] = curr.count;
       return acc;
     }, {});
+  }
+
+  /**
+   * Retrieves detailed information for a specific batch
+   * @async
+   * @param {string|number} batchId - The ID of the batch to fetch
+   * @param {string} direction - The direction of the batch ('incoming' or 'outgoing')
+   * @returns {Promise<Object|null>} Detailed batch information or null if not found
+   * @throws {Error} If database query fails
+   */
+  async getBatchDetails(batchId, direction) {
+    try {
+      logger.debug('Getting batch details', { batchId, direction });
+      this.validateDirection(direction);
+      
+      const tableName = `sym_${direction}_batch`;
+      const query = `
+        SELECT * FROM ${tableName} 
+        WHERE batch_id = ? 
+        LIMIT 1
+      `;
+      
+      const results = await this.database.executeQuery(query, [batchId]);
+      
+      if (!results || results.length === 0) {
+        logger.debug('No batch found with provided ID', { batchId, direction });
+        return null;
+      }
+      
+      // Transform the basic batch data
+      const batchData = this.transformBatch(results[0]);
+      
+      // Fetch additional data related to this batch
+      logger.debug('Fetching additional batch data', { batchId, direction });
+      const additionalData = await this.fetchBatchAdditionalData(batchId, direction);
+      
+      // Combine the data
+      logger.debug('Batch details retrieved successfully', { batchId, direction });
+      return {
+        ...batchData,
+        ...additionalData
+      };
+    } catch (error) {
+      logger.error(`Error in getBatchDetails: ${error.message}`, { 
+        batchId, 
+        direction,
+        stack: error.stack,
+        code: error.code
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Fetches additional data related to a specific batch
+   * @private
+   * @async
+   * @param {string|number} batchId - The ID of the batch
+   * @param {string} direction - The direction of the batch ('incoming' or 'outgoing')
+   * @returns {Promise<Object>} Additional batch data
+   */
+  async fetchBatchAdditionalData(batchId, direction) {
+    // For outgoing batches, we might want to fetch data events
+    if (direction === DIRECTION.OUTGOING) {
+      const dataEvents = await this.fetchBatchDataEvents(batchId);
+      return { dataEvents };
+    }
+    
+    // For incoming batches, we might want to fetch different related data
+    // This can be customized based on requirements
+    return {};
+  }
+
+  /**
+   * Fetches data events associated with an outgoing batch
+   * @private
+   * @async
+   * @param {string|number} batchId - The ID of the outgoing batch
+   * @returns {Promise<Array>} Array of data events
+   */
+  async fetchBatchDataEvents(batchId) {
+    try {
+      logger.debug('Fetching batch data events', { batchId });
+      const query = `
+        SELECT * FROM sym_data_event 
+        WHERE batch_id = ? 
+        ORDER BY data_id 
+        LIMIT 100
+      `;
+      
+      const results = await this.database.executeQuery(query, [batchId]);
+      
+      logger.debug('Batch data events retrieved', { batchId, count: results.length });
+      return results.map(event => ({
+        dataId: event.data_id,
+        batchId: event.batch_id,
+        routerId: event.router_id,
+        createTime: event.create_time,
+        tableId: event.table_name
+      }));
+    } catch (error) {
+      logger.error(`Error fetching batch data events: ${error.message}`, { 
+        batchId,
+        stack: error.stack,
+        code: error.code
+      });
+      return [];
+    }
+  }
+
+  /**
+   * Validates the direction parameter
+   * @private
+   * @param {string} direction - The direction to validate
+   * @throws {Error} If direction is invalid
+   */
+  validateDirection(direction) {
+    if (!direction || !Object.values(DIRECTION).includes(direction.toLowerCase())) {
+      throw new Error('Invalid direction parameter');
+    }
+  }
+
+  /**
+   * Retrieves sym_data entries associated with a specific batch
+   * @async
+   * @param {string|number} batchId - The ID of the batch
+   * @param {string} direction - The direction of the batch ('incoming' or 'outgoing')
+   * @returns {Promise<Array>} Array of sym_data entries associated with the batch
+   * @throws {Error} If database query fails
+   */
+  async getBatchData(batchId, direction) {
+    try {
+      logger.debug('Getting batch data', { batchId, direction });
+      // Validate direction parameter
+      this.validateDirection(direction);
+
+      // Normalize direction to lowercase
+      const normalizedDirection = direction.toLowerCase();
+      
+      // First verify the batch exists in the appropriate batch table
+      const batchExists = await this.batchExists(batchId, normalizedDirection);
+      
+      if (!batchExists) {
+        // Return empty array if batch doesn't exist
+        logger.debug('Batch does not exist, returning empty data array', { batchId, direction: normalizedDirection });
+        return [];
+      }
+      
+      // SQL query to join sym_data_event with sym_data
+      // Use batch_id to find related data entries
+      const query = `
+        SELECT d.*
+        FROM sym_data_event de
+        JOIN sym_data d ON de.data_id = d.data_id
+        WHERE de.batch_id = ?
+        ORDER BY d.data_id
+        LIMIT 100
+      `;
+      
+      logger.debug('Executing batch data query', { batchId, query });
+      const results = await this.database.executeQuery(query, [batchId]);
+      
+      logger.debug('Batch data retrieved successfully', { batchId, count: results.length });
+      // Transform the results to camelCase for frontend consumption
+      return results.map(this.transformDataEntry);
+    } catch (error) {
+      logger.error(`Error fetching batch data: ${error.message}`, { 
+        batchId, 
+        direction,
+        stack: error.stack,
+        code: error.code 
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Checks if a batch exists in the database
+   * @private
+   * @async
+   * @param {string|number} batchId - The ID of the batch
+   * @param {string} direction - The direction of the batch
+   * @returns {Promise<boolean>} True if batch exists, false otherwise
+   */
+  async batchExists(batchId, direction) {
+    const batchCheckQuery = `
+      SELECT batch_id FROM sym_${direction}_batch 
+      WHERE batch_id = ? 
+      LIMIT 1
+    `;
+    
+    const batchExists = await this.database.executeQuery(batchCheckQuery, [batchId]);
+    
+    return batchExists && batchExists.length > 0;
+  }
+
+  /**
+   * Transforms a data entry to the expected format
+   * @private
+   * @param {Object} data - Raw data entry from database
+   * @returns {Object} Transformed data entry
+   */
+  transformDataEntry(data) {
+    return {
+      dataId: data.data_id,
+      tableName: data.table_name,
+      eventType: data.event_type,
+      rowData: data.row_data,
+      oldData: data.old_data,
+      pkData: data.pk_data,
+      createTime: data.create_time,
+      sourceNodeId: data.source_node_id,
+      channelId: data.channel_id,
+      triggerHistId: data.trigger_hist_id
+    };
   }
 }
 
