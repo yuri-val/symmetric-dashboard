@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext, useCallback } from 'react';
-import { Typography, Box, Container, Paper, Grid } from '@mui/material';
+import { Typography, Box, Container, Paper, Grid, Divider } from '@mui/material';
 import { motion } from 'framer-motion';
 import PropTypes from 'prop-types';
 import { ThemeContext } from '../context/ThemeContext';
@@ -7,6 +7,7 @@ import { fetchBatchStatus } from '../api/models/batches';
 import BatchTabs from '../components/batches/BatchTabs';
 import BatchTable from '../components/batches/BatchTable';
 import StatusCardList from '../components/batches/StatusCardList';
+import ChannelFilterChips from '../components/batches/ChannelFilterChips';
 
 import './Batches.css';
 
@@ -38,7 +39,8 @@ function Batches() {
   const [stats, setStats] = useState({ incoming: {}, outgoing: {} });
   const [selectedFilters, setSelectedFilters] = useState({
     incoming: null,
-    outgoing: null
+    outgoing: null,
+    channel: null
   });
   const { theme } = useContext(ThemeContext);
 
@@ -47,7 +49,8 @@ function Batches() {
       setError(null);
       const data = await fetchBatchStatus({
         incomingStatus: selectedFilters.incoming,
-        outgoingStatus: selectedFilters.outgoing
+        outgoingStatus: selectedFilters.outgoing,
+        channel: selectedFilters.channel
       });
 
       setBatches({
@@ -95,6 +98,23 @@ function Batches() {
     });
   }, []);
 
+  const handleChannelSelect = useCallback((channelId) => {
+    setSelectedFilters(prev => {
+      // If the same channel is clicked again, toggle it off
+      if (prev.channel === channelId) {
+        return {
+          ...prev,
+          channel: null
+        };
+      }
+      // Otherwise, set the new channel filter
+      return {
+        ...prev,
+        channel: channelId
+      };
+    });
+  }, []);
+
   const renderErrorMessage = () => (
     <motion.div variants={itemVariants}>
       <Paper 
@@ -116,6 +136,13 @@ function Batches() {
 
   const renderBatchContent = () => (
     <Box sx={{ width: '100%' }}>
+      <motion.div variants={itemVariants}>
+        <ChannelFilterChips
+          selectedChannel={selectedFilters.channel}
+          onChannelSelect={handleChannelSelect}
+        />
+      </motion.div>
+
       <Grid container spacing={3}>
         <Grid item xs={12} md={6}>
           <motion.div variants={itemVariants}>

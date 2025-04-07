@@ -32,6 +32,30 @@ class BatchService {
     }
     this.database = new DatabaseRepository(config);
   }
+  
+  /**
+   * Retrieves unique channel IDs from both incoming and outgoing batches
+   * @async
+   * @returns {Promise<Array>} Array of unique channel IDs
+   * @throws {Error} If database query fails
+   */
+  async getUniqueChannels() {
+    try {
+      logger.debug('Fetching unique channel IDs');
+      
+      const channels = await this.database.getUniqueChannels();
+      
+      logger.debug('Unique channel IDs retrieved successfully', { count: channels.length });
+      
+      return channels;
+    } catch (error) {
+      logger.error('Error in getUniqueChannels', { 
+        error: error.message,
+        stack: error.stack
+      });
+      throw error;
+    }
+  }
 
   /**
    * Retrieves batch status information with optional filtering
@@ -39,12 +63,13 @@ class BatchService {
    * @param {Object} filters - Filter criteria
    * @param {string} [filters.incomingStatus] - Filter for incoming batch status
    * @param {string} [filters.outgoingStatus] - Filter for outgoing batch status
+   * @param {string} [filters.channel] - Filter batches by channel ID
    * @returns {Promise<Object>} Batch status information including outgoing and incoming batches with statistics
    * @throws {Error} If database query fails
    */
   async getBatchStatus(filters = {}) {
     try {
-      const { incomingStatus, outgoingStatus } = filters;
+      const { incomingStatus, outgoingStatus, channel } = filters;
       
       logger.debug('Fetching batch status', { filters });
 
@@ -54,8 +79,8 @@ class BatchService {
         outgoingStats,
         incomingStats
       ] = await Promise.all([
-        this.fetchBatches(DIRECTION.OUTGOING, outgoingStatus),
-        this.fetchBatches(DIRECTION.INCOMING, incomingStatus),
+        this.fetchBatches(DIRECTION.OUTGOING, outgoingStatus, channel),
+        this.fetchBatches(DIRECTION.INCOMING, incomingStatus, channel),
         this.fetchBatchStats(DIRECTION.OUTGOING),
         this.fetchBatchStats(DIRECTION.INCOMING)
       ]);
@@ -92,22 +117,33 @@ class BatchService {
    * @async
    * @param {string} type - Type of batches to fetch ('incoming' or 'outgoing')
    * @param {string} [status] - Optional status filter
+   * @param {string} [channel] - Optional channel filter
    * @returns {Promise<Array>} Array of batch records
    */
-  async fetchBatches(type, status) {
+  async fetchBatches(type, status, channel) {
     const tableName = `sym_${type}_batch`;
     const params = [];
+    const conditions = [];
     
     let query = `SELECT * FROM ${tableName}`;
     
     if (status) {
-      query += ' WHERE status = ?';
+      conditions.push('status = ?');
       params.push(status);
+    }
+    
+    if (channel) {
+      conditions.push('channel_id = ?');
+      params.push(channel);
+    }
+    
+    if (conditions.length > 0) {
+      query += ' WHERE ' + conditions.join(' AND ');
     }
 
     query += ' ORDER BY create_time DESC LIMIT 100';
     
-    logger.debug('Fetching batches', { type, status, query });
+    logger.debug('Fetching batches', { type, status, channel, query });
     return this.database.executeQuery(query, params);
   }
 

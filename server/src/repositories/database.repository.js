@@ -100,6 +100,19 @@ class DatabaseRepository {
   }
 
   /**
+   * Get unique channel IDs from both incoming and outgoing batches
+   * @returns {Promise<Array>} Unique channel IDs
+   */
+  async getUniqueChannels() {
+    return this.executeQuery(
+      'SELECT DISTINCT channel_id FROM sym_outgoing_batch ' +
+      'UNION ' +
+      'SELECT DISTINCT channel_id FROM sym_incoming_batch ' +
+      'ORDER BY channel_id'
+    );
+  }
+
+  /**
    * Get triggers configuration
    * @returns {Promise<Array>} Triggers data
    */

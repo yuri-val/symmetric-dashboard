@@ -17,6 +17,7 @@ export { default as BatchEmptyState } from './BatchEmptyState';
  * Batch navigation and filtering components
  */
 export { default as BatchTabs } from './BatchTabs';
+export { default as ChannelFilterChips } from './ChannelFilterChips';
 
 /**
  * Status display components

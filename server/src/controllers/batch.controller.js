@@ -31,22 +31,40 @@ class BatchController {
   }
 
   /**
+   * Handles requests to get unique channel IDs from both incoming and outgoing batches
+   * @async
+   * @param {Object} req - Express request object
+   * @param {Object} res - Express response object
+   * @returns {Promise<void>} Sends JSON response with unique channel IDs
+   */
+  async getUniqueChannels(req, res) {
+    try {
+      const channels = await this.batchService.getUniqueChannels();
+      res.json(channels);
+    } catch (error) {
+      this.handleError(error, res, 'Failed to fetch unique channels');
+    }
+  }
+
+  /**
    * Handles requests to get batch status information
    * @async
    * @param {Object} req - Express request object
    * @param {Object} req.query - Query parameters
    * @param {string} [req.query.incomingStatus] - Filter for incoming batch status
    * @param {string} [req.query.outgoingStatus] - Filter for outgoing batch status
+   * @param {string} [req.query.channel] - Filter batches by channel ID
    * @param {Object} res - Express response object
    * @returns {Promise<void>} Sends JSON response with batch status data
    */
   async getBatchStatus(req, res) {
     try {
-      const { incomingStatus, outgoingStatus } = req.query;
+      const { incomingStatus, outgoingStatus, channel } = req.query;
 
       const batchStatus = await this.batchService.getBatchStatus({
         incomingStatus,
-        outgoingStatus
+        outgoingStatus,
+        channel
       });
 
       res.json(batchStatus);

@@ -10,6 +10,7 @@ import axiosInstance from '../axiosConfig';
  * @typedef {Object} BatchStatusFilters
  * @property {string} [incomingStatus] - Filter incoming batches by status code
  * @property {string} [outgoingStatus] - Filter outgoing batches by status code
+ * @property {string} [channel] - Filter batches by channel ID
  * @property {string} [nodeId] - Filter batches by node ID
  * @property {number} [limit] - Limit the number of results
  * @property {string} [sortBy] - Field to sort results by
@@ -57,13 +58,14 @@ const validateBatchId = (batchId) => {
 export const fetchBatchStatus = async (filters = {}) => {
   try {
     // Extract filter parameters
-    const { incomingStatus, outgoingStatus, ...otherFilters } = filters;
+    const { incomingStatus, outgoingStatus, channel, ...otherFilters } = filters;
 
     // Build query parameters object
     const params = {
       ...otherFilters,
       ...(incomingStatus && { incomingStatus }),
-      ...(outgoingStatus && { outgoingStatus })
+      ...(outgoingStatus && { outgoingStatus }),
+      ...(channel && { channel })
     };
 
     // Make API request

@@ -121,6 +121,17 @@ app.get('/api/engine/config', asyncHandler((req, res) =>
 
 // Batch-related routes
 /**
+ * Get unique channel IDs from both incoming and outgoing batches
+ * @name GET/api/batch/channels
+ * @function
+ * @memberof module:server
+ * @returns {Array} List of unique channel IDs
+ */
+app.get('/api/batch/channels', asyncHandler((req, res) => 
+  batchController.getUniqueChannels(req, res)
+));
+
+/**
  * Get the status of incoming and outgoing batches
  * @name GET/api/batch/status
  * @function
