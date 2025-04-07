@@ -1,7 +1,21 @@
+/**
+ * @module BatchService
+ * @description Service for handling batch-related operations and data retrieval
+ * @author Yuri V
+ */
 const DatabaseRepository = require('../repositories/database.repository');
 const logger = require('../logger');
 
+/**
+ * Service class for batch operations
+ * @class BatchService
+ */
 class BatchService {
+  /**
+   * Creates an instance of BatchService
+   * @param {Object} config - Database configuration object
+   * @throws {Error} If database configuration is not provided
+   */
   constructor(config) {
     if (!config) {
       throw new Error('Database configuration is required');
@@ -9,30 +23,90 @@ class BatchService {
     this.database = new DatabaseRepository(config);
   }
 
-async getBatchStatus() {
-  try {
-    // Get outgoing batches
-    const outgoingBatches = await this.database.executeQuery(
-      'SELECT * FROM sym_outgoing_batch ORDER BY create_time DESC LIMIT 100'
-    );
+  /**
+   * Retrieves batch status information with optional filtering
+   * @async
+   * @param {Object} filters - Filter criteria
+   * @param {string} [filters.incomingStatus] - Filter for incoming batch status
+   * @param {string} [filters.outgoingStatus] - Filter for outgoing batch status
+   * @returns {Promise<Object>} Batch status information including outgoing and incoming batches with statistics
+   * @throws {Error} If database query fails
+   */
+  async getBatchStatus(filters = {}) {
+    try {
+      const { incomingStatus, outgoingStatus } = filters;
 
-    // Get incoming batches
-    const incomingBatches = await this.database.executeQuery(
-      'SELECT * FROM sym_incoming_batch ORDER BY create_time DESC LIMIT 100'
-    );
+      const [
+        outgoingBatches,
+        incomingBatches,
+        outgoingStats,
+        incomingStats
+      ] = await Promise.all([
+        this.fetchBatches('outgoing', outgoingStatus),
+        this.fetchBatches('incoming', incomingStatus),
+        this.fetchBatchStats('outgoing'),
+        this.fetchBatchStats('incoming')
+      ]);
 
-    // Get status statistics for outgoing batches
-    const outgoingStats = await this.database.executeQuery(
-      'SELECT status, COUNT(*) as count FROM sym_outgoing_batch GROUP BY status'
-    );
+      return {
+        outgoing: outgoingBatches.map(this.transformBatch),
+        incoming: incomingBatches.map(this.transformBatch),
+        stats: {
+          outgoing: this.transformStats(outgoingStats),
+          incoming: this.transformStats(incomingStats)
+        }
+      };
+    } catch (error) {
+      logger.error('Error in getBatchStatus:', error);
+      throw error;
+    }
+  }
 
-    // Get status statistics for incoming batches
-    const incomingStats = await this.database.executeQuery(
-      'SELECT status, COUNT(*) as count FROM sym_incoming_batch GROUP BY status'
-    );
+  /**
+   * Fetches batches from the database
+   * @private
+   * @async
+   * @param {string} type - Type of batches to fetch ('incoming' or 'outgoing')
+   * @param {string} [status] - Optional status filter
+   * @returns {Promise<Array>} Array of batch records
+   */
+  async fetchBatches(type, status) {
+    const tableName = `sym_${type}_batch`;
+    let query = `SELECT * FROM ${tableName}`;
+    const params = [];
 
-    // Transform data to match frontend expectations
-    const transformBatch = (batch) => ({
+    if (status) {
+      query += ' WHERE status = ?';
+      params.push(status);
+    }
+
+    query += ' ORDER BY create_time DESC LIMIT 100';
+
+    return this.database.executeQuery(query, params);
+  }
+
+  /**
+   * Fetches batch statistics from the database
+   * @private
+   * @async
+   * @param {string} type - Type of batches to fetch stats for ('incoming' or 'outgoing')
+   * @returns {Promise<Array>} Array of batch statistics
+   */
+  async fetchBatchStats(type) {
+    const tableName = `sym_${type}_batch`;
+    const query = `SELECT status, COUNT(*) as count FROM ${tableName} GROUP BY status`;
+
+    return this.database.executeQuery(query);
+  }
+
+  /**
+   * Transforms a batch record to the expected format
+   * @private
+   * @param {Object} batch - Raw batch record from database
+   * @returns {Object} Transformed batch object
+   */
+  transformBatch(batch) {
+    return {
       batchId: batch.batch_id,
       nodeId: batch.node_id,
       channelId: batch.channel_id,
@@ -43,28 +117,21 @@ async getBatchStatus() {
       createTime: batch.create_time,
       loadTime: batch.load_time,
       routerId: batch.router_id
-    });
-
-    // Transform stats data
-    const transformStats = (stats) => 
-      stats.reduce((acc, curr) => {
-        acc[curr.status] = curr.count;
-        return acc;
-      }, {});
-
-    return {
-      outgoing: outgoingBatches.map(transformBatch),
-      incoming: incomingBatches.map(transformBatch),
-      stats: {
-        outgoing: transformStats(outgoingStats),
-        incoming: transformStats(incomingStats)
-      }
     };
-  } catch (error) {
-    logger.error('Error in getBatchStatus:', error);
-    throw error;
   }
-}
+
+  /**
+   * Transforms batch statistics to a map of status codes to counts
+   * @private
+   * @param {Array} stats - Array of status statistics
+   * @returns {Object} Map of status codes to counts
+   */
+  transformStats(stats) {
+    return stats.reduce((acc, curr) => {
+      acc[curr.status] = curr.count;
+      return acc;
+    }, {});
+  }
 }
 
 module.exports = BatchService;
