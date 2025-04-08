@@ -61,7 +61,7 @@ ErrorState.propTypes = {
  * @param {function} props.onChannelSelect - Function to call when a channel is selected
  * @returns {JSX.Element} The rendered ChannelFilterChips component
  */
-const ChannelFilterChips = ({ selectedChannel, onChannelSelect }) => {
+const ChannelFilterChips = ({ selectedChannel = null, onChannelSelect }) => {
   const [channels, setChannels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -95,7 +95,7 @@ const ChannelFilterChips = ({ selectedChannel, onChannelSelect }) => {
         setLoading(true);
         setError(null);
         const data = await fetchUniqueChannels();
-        console.log('Fetched channels:', data);
+        // Removed console.log
         setChannels(data.map(item => item.channel_id));
       } catch (err) {
         console.error('Error loading channels:', err);
@@ -166,8 +166,6 @@ ChannelFilterChips.propTypes = {
   onChannelSelect: PropTypes.func.isRequired
 };
 
-ChannelFilterChips.defaultProps = {
-  selectedChannel: null
-};
+// Removed defaultProps
 
 export default ChannelFilterChips;

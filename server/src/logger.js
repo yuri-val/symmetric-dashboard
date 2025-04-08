@@ -50,7 +50,7 @@ class Logger {
     if (this.isDevelopment) {
       const contextStr = context ? `\nContext: ${JSON.stringify(context, null, 2)}` : '';
       this.log(`DEBUG: ${message}${contextStr}`);
-      console.debug(`DEBUG: ${message}`, context);
+      // Removed console.debug call
     }
   }
 
@@ -65,14 +65,12 @@ class Logger {
       const contextStr = JSON.stringify(context, null, 2);
       this.log(`INFO: ${message}\nContext: ${contextStr}`);
       
-      // Also log to console in development mode for immediate feedback
-      console.info(`INFO: ${message}`, context);
+      // Removed console.info call
     } else {
       // In production, just log the message
       this.log(`INFO: ${message}`);
       
-      // Still log to console but without context in production
-      console.info(`INFO: ${message}`);
+      // Removed console.info call
     }
   }
 

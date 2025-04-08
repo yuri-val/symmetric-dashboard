@@ -15,7 +15,7 @@ import axiosInstance from '../axiosConfig';
 export const fetchUniqueChannels = async () => {
   try {
     const response = await axiosInstance.get('/batch/channels');
-    console.log('Fetched unique channels:', response);
+    // Removed console.log
     return response || [];
   } catch (error) {
     console.error('Error fetching unique channels:', error.message);
