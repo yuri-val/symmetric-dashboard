@@ -10,7 +10,7 @@ import PropTypes from 'prop-types';
  * @param {string} props.message - The loading message to display
  * @returns {JSX.Element} The rendered LoadingIndicator component
  */
-const LoadingIndicator = memo(function LoadingIndicator({ message }) {
+const LoadingIndicator = memo(function LoadingIndicator({ message = 'Loading dashboard data...' }) {
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -36,10 +36,6 @@ const LoadingIndicator = memo(function LoadingIndicator({ message }) {
 
 LoadingIndicator.propTypes = {
   message: PropTypes.string
-};
-
-LoadingIndicator.defaultProps = {
-  message: 'Loading dashboard data...'
 };
 
 export default LoadingIndicator;

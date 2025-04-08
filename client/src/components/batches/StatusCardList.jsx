@@ -22,7 +22,7 @@ const emptyStateVariants = {
  * @param {function} props.onStatusClick - Function to call when a status card is clicked
  * @returns {JSX.Element} The rendered StatusCardList component
  */
-const StatusCardList = ({ stats, direction, title, selectedStatus, onStatusClick }) => {
+const StatusCardList = ({ stats, direction, title, selectedStatus = null, onStatusClick = () => {} }) => {
   const statData = stats[direction] || {};
   const statKeys = Object.keys(statData);
 
@@ -84,11 +84,6 @@ StatusCardList.propTypes = {
   title: PropTypes.string.isRequired,
   selectedStatus: PropTypes.string,
   onStatusClick: PropTypes.func
-};
-
-StatusCardList.defaultProps = {
-  selectedStatus: null,
-  onStatusClick: () => {}
 };
 
 export default StatusCardList;

@@ -24,7 +24,7 @@ const cardAnimationVariants = {
  * @param {string} [props.statusLabel] - Optional override for the status label
  * @returns {JSX.Element} The rendered StatusCard component
  */
-const StatusCard = ({ status, count, isSelected, onStatusClick, statusLabel }) => {
+const StatusCard = ({ status, count, isSelected = false, onStatusClick = () => {}, statusLabel = null }) => {
   const { theme: themeMode } = useContext(ThemeContext);
   const muiTheme = useTheme();
 
@@ -106,12 +106,6 @@ StatusCard.propTypes = {
   isSelected: PropTypes.bool,
   onStatusClick: PropTypes.func,
   statusLabel: PropTypes.string
-};
-
-StatusCard.defaultProps = {
-  isSelected: false,
-  onStatusClick: () => {},
-  statusLabel: null
 };
 
 export default StatusCard;

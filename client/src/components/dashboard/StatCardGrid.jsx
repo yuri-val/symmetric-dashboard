@@ -12,7 +12,7 @@ import { ThemeContext } from '../../context/ThemeContext';
  * @param {boolean} props.isLoading - Whether the grid is in loading state
  * @returns {JSX.Element} The rendered StatCardGrid component
  */
-const StatCardGrid = memo(function StatCardGrid({ children, isLoading }) {
+const StatCardGrid = memo(function StatCardGrid({ children, isLoading = false }) {
   const { theme } = useContext(ThemeContext);
   const isMobile = useMediaQuery('(max-width:600px)');
   const isTablet = useMediaQuery('(max-width:960px)');
@@ -58,10 +58,6 @@ const StatCardGrid = memo(function StatCardGrid({ children, isLoading }) {
 StatCardGrid.propTypes = {
   children: PropTypes.node.isRequired,
   isLoading: PropTypes.bool
-};
-
-StatCardGrid.defaultProps = {
-  isLoading: false
 };
 
 export default StatCardGrid;
