@@ -51,6 +51,11 @@ const NodeCard = ({ node, getStatusColor, formatMemoryUsage, formatDate }) => {
           <Typography variant="body2" gutterBottom>
             Group: {node.nodeGroupId || 'N/A'}
           </Typography>
+          {node.vesselName && (
+            <Typography variant="body2" gutterBottom>
+              Vessel: {node.vesselName}
+            </Typography>
+          )}
           <Typography variant="body2" gutterBottom>
             Host: {node.hostName || 'N/A'}
           </Typography>

@@ -20,6 +20,9 @@ const chipVariants = {
   exit: { opacity: 0, scale: 0.8 }
 };
 
+const containerStyles = { display: 'flex', alignItems: 'center', gap: 2, border: '1px solid #1976d2', borderRadius: '8px', p: 1 };
+
+
 /**
  * Renders a loading state for the channel filter
  * @returns {JSX.Element} Loading state component
@@ -67,15 +70,6 @@ const ChannelFilterChips = ({ selectedChannel = null, onChannelSelect }) => {
   const [error, setError] = useState(null);
   const { theme: themeMode } = useContext(ThemeContext);
   const muiTheme = useTheme();
-
-  // Compute container styles based on theme
-  const containerStyles = useMemo(() => ({
-    mb: 3, 
-    mt: 1,
-    backgroundColor: themeMode === 'dark' ? 'rgba(30, 30, 30, 0.4)' : 'rgba(255, 255, 255, 0.4)',
-    borderRadius: 1,
-    p: 2
-  }), [themeMode]);
 
   // Compute chip styles based on theme and selection state
   const getChipStyles = useCallback((isSelected) => ({
@@ -126,8 +120,9 @@ const ChannelFilterChips = ({ selectedChannel = null, onChannelSelect }) => {
         variant="subtitle2" 
         gutterBottom
         color={themeMode === 'dark' ? 'white' : 'text.primary'}
+        sx={{ whiteSpace: 'nowrap', textTransform: 'uppercase' }}
       >
-        Filter by Channel:
+        CNL:
       </Typography>
       <motion.div 
         variants={containerVariants}

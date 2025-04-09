@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext, memo } from 'react';
 import { motion } from 'framer-motion';
 import { fetchNodeStatus } from '../api/models/nodes';
+import { fetchBatchStatus } from '../api/models/batches';
 import { ThemeContext } from '../context/ThemeContext';
 import { ErrorBoundary } from 'react-error-boundary';
 import { StatCard, StatCardGrid, LoadingIndicator, ErrorDisplay } from '../components/dashboard';
@@ -27,13 +28,19 @@ const Dashboard = memo(function Dashboard() {
       try {
         setIsLoading(true);
         setError(null);
-        const { nodeStatus, syncStats } = await fetchNodeStatus();
+        const nodeStatus = await fetchNodeStatus();
+        const {
+          stats: { 
+            incoming: { NE: pendingInvoming = 0 } = {}, 
+            outgoing: { NE: pendingOutgoing = 0 } = {} 
+          }
+        } = await fetchBatchStatus({ incomingStatus: 'NE', outgoingStatus: 'NE'});
         
         // Extract values with safer fallbacks
-        const activeNodes = nodeStatus.find(status => status.status === 'Online')?.count || 0;
-        const errorNodes = nodeStatus.find(status => status.status === 'Offline')?.count || 0;
-        const pendingBatches = syncStats.find(stat => stat.name === 'NE')?.value || 0;
-        const totalNodes = nodeStatus.reduce((acc, curr) => acc + curr.count, 0);
+        const activeNodes = nodeStatus.online;
+        const errorNodes = nodeStatus.offline;
+        const pendingBatches = pendingInvoming + pendingOutgoing;
+        const totalNodes = nodeStatus.total;
         
         setStats({
           totalNodes,

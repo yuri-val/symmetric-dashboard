@@ -1,12 +1,12 @@
 import { useState, useEffect, useContext, useCallback } from 'react';
-import { Typography, Box, Container, Paper, Grid, Divider } from '@mui/material';
+import { Box, Container, Paper, Grid } from '@mui/material';
 import { motion } from 'framer-motion';
 import PropTypes from 'prop-types';
 import { ThemeContext } from '../context/ThemeContext';
 import { fetchBatchStatus } from '../api/models/batches';
 import BatchTabs from '../components/batches/BatchTabs';
 import BatchTable from '../components/batches/BatchTable';
-import StatusCardList from '../components/batches/StatusCardList';
+import StatusFilterChips from '../components/batches/StatusFilterChips';
 import ChannelFilterChips from '../components/batches/ChannelFilterChips';
 
 import './Batches.css';
@@ -136,38 +136,44 @@ function Batches() {
 
   const renderBatchContent = () => (
     <Box sx={{ width: '100%' }}>
-      <motion.div variants={itemVariants}>
-        <ChannelFilterChips
-          selectedChannel={selectedFilters.channel}
-          onChannelSelect={handleChannelSelect}
-        />
-      </motion.div>
+      
 
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
-          <motion.div variants={itemVariants}>
-            <StatusCardList 
-              stats={stats} 
-              direction="outgoing" 
-              title="Outgoing Batch Status" 
-              selectedStatus={selectedFilters.outgoing}
-              onStatusClick={handleStatusClick}
-            />
-          </motion.div>
-        </Grid>
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: 'row', 
+        justifyContent: 'space-between',
+        gap: 2, 
+        mb: 3,
+        '& > *': {
+          flex: 1
+        }
+      }}>
+        <motion.div variants={itemVariants}>
+          <ChannelFilterChips
+            selectedChannel={selectedFilters.channel}
+            onChannelSelect={handleChannelSelect}
+          />
+        </motion.div>
 
-        <Grid item xs={12} md={6}>
-          <motion.div variants={itemVariants}>
-            <StatusCardList 
-              stats={stats} 
-              direction="incoming" 
-              title="Incoming Batch Status" 
-              selectedStatus={selectedFilters.incoming}
-              onStatusClick={handleStatusClick}
-            />
-          </motion.div>
-        </Grid>
-      </Grid>
+        <motion.div variants={itemVariants}>
+          <StatusFilterChips
+            stats={stats}
+            direction="outgoing"
+            title="OUT"
+            selectedStatus={selectedFilters.outgoing}
+            onStatusClick={handleStatusClick}
+          />
+        </motion.div>
+        <motion.div variants={itemVariants}>
+          <StatusFilterChips
+            stats={stats}
+            direction="incoming"
+            title="IN"
+            selectedStatus={selectedFilters.incoming}
+            onStatusClick={handleStatusClick}
+          />
+        </motion.div>
+      </Box>
 
       <motion.div variants={itemVariants}>
         <BatchTabs 
@@ -199,29 +205,12 @@ function Batches() {
         animate="animate"
         variants={pageVariants}
       >
-        <motion.div variants={itemVariants}>
-          <Typography variant="h4" gutterBottom>
-            Batches
-          </Typography>
-        </motion.div>
-
         {error ? renderErrorMessage() : renderBatchContent()}
       </motion.div>
     </Container>
   );
 }
 
-// PropTypes for child components used in this file
-StatusCardList.propTypes = {
-  stats: PropTypes.shape({
-    incoming: PropTypes.object,
-    outgoing: PropTypes.object
-  }).isRequired,
-  direction: PropTypes.oneOf(['incoming', 'outgoing']).isRequired,
-  title: PropTypes.string.isRequired,
-  selectedStatus: PropTypes.string,
-  onStatusClick: PropTypes.func.isRequired
-};
 
 BatchTabs.propTypes = {
   batches: PropTypes.shape({

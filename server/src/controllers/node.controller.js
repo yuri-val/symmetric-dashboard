@@ -2,10 +2,14 @@
  * @fileoverview Controller layer for handling node-related HTTP requests
  */
 const NodeService = require('../services/node.service');
+const NodeInfoService = require('../services/node-info.service');
+const DatabaseRepository = require('../repositories/database.repository');
 
 class NodeController {
   constructor(dbConfig) {
     this.nodeService = new NodeService(dbConfig);
+    const dbRepo = new DatabaseRepository(dbConfig);
+    this.nodeInfoService = new NodeInfoService(dbRepo);
   }
 
   /**
@@ -15,7 +19,7 @@ class NodeController {
    */
   async getNodeStatus(req, res) {
     try {
-      const stats = await this.nodeService.getNodeStatusStats();
+      const stats = await this.nodeInfoService.getNodeStatusStats();
       res.json(stats);
     } catch (error) {
       this.handleError(res, 'Error fetching status', error);
@@ -29,7 +33,7 @@ class NodeController {
    */
   async getNodes(req, res) {
     try {
-      const nodes = await this.nodeService.getNodesInfo();
+      const nodes = await this.nodeInfoService.getNodesInfo();
       res.json(nodes);
     } catch (error) {
       this.handleError(res, 'Error fetching nodes', error);

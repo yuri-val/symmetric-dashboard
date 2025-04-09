@@ -77,9 +77,10 @@ class DatabaseRepository {
       'h.heartbeat_time, h.host_name, h.ip_address, ' +
       'h.os_name, h.os_version, h.available_processors, ' +
       'h.free_memory_bytes, h.total_memory_bytes, ' +
-      'h.symmetric_version ' +
+      'h.symmetric_version, g.description as node_group_description ' +
       'FROM sym_node n ' +
-      'LEFT JOIN sym_node_host h ON n.node_id = h.node_id'
+      'LEFT JOIN sym_node_host h ON n.node_id = h.node_id ' +
+      'LEFT JOIN sym_node_group g ON n.node_group_id = g.node_group_id'
     );
   }
 
