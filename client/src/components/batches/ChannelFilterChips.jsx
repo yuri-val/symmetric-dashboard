@@ -20,7 +20,15 @@ const chipVariants = {
   exit: { opacity: 0, scale: 0.8 }
 };
 
-const containerStyles = { display: 'flex', alignItems: 'center', gap: 2, border: '1px solid #1976d2', borderRadius: '8px', p: 1 };
+const containerStyles = { 
+  display: 'flex', 
+  alignItems: 'center', 
+  gap: 2, 
+  border: '1px solid #1976d2', 
+  borderRadius: '8px', 
+  p: 1,
+  boxShadow: 'var(--shadow)'
+};
 
 
 /**

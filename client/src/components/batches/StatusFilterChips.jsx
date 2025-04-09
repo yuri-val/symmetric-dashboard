@@ -28,15 +28,7 @@ const containerStyles = {
   borderRadius: '8px', 
   p: 1,
   position: 'relative',
-  '&::after': {
-    content: '"(filtered by channel)"',
-    position: 'absolute',
-    top: '-20px',
-    right: 0,
-    fontSize: '0.75rem',
-    color: 'text.secondary',
-    fontStyle: 'italic'
-  }
+  boxShadow: 'var(--shadow)'
 };
 
 /**

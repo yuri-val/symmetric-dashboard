@@ -35,7 +35,8 @@ const BatchTabs = ({ batches, onTabChange }) => {
           backgroundColor: theme === 'dark' ? 'rgba(30, 30, 30, 0.6)' : 'rgba(255, 255, 255, 0.6)',
           borderRadius: '8px',
           padding: '4px',
-          transition: 'all 0.3s ease'
+          transition: 'all 0.3s ease',
+          boxShadow: 'var(--shadow)'
         }}
       >
         <Tabs 
