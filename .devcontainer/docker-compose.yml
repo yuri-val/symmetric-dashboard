@@ -1,0 +1,50 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ..:/workspace:cached
+    command: sleep infinity
+    environment:
+      - DB_HOST=symmetricds-mysql
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_PASSWORD=r00t_p4ssw0rd
+      - DB_NAME=symmetricds_meta
+      - NODE_ENV=development
+      - PORT=3001
+    ports:
+      - "3000:3000" # Client Vite dev server
+      - "3001:3001" # Express server
+    networks:
+      - symmetric-dev-network
+    # This makes sure the container sees localhost as the proper service
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    # Overrides default command so things don't shut down after the process ends.
+    depends_on:
+      - mysql
+
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    container_name: symmetricds-mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=r00t_p4ssw0rd
+      - MYSQL_DATABASE=symmetricds_meta
+    volumes:
+      - mysql-data:/var/lib/mysql
+    ports:
+      - "13306:3306" # Changed from 3306:3306 to avoid port conflict
+    networks:
+      - symmetric-dev-network
+
+volumes:
+  mysql-data:
+
+networks:
+  symmetric-dev-network:
+    name: symmetric-dev-network

@@ -1,0 +1,41 @@
+{
+  "name": "Symmetric Dashboard Development",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspace",
+  "forwardPorts": [
+    6789, // Client Vite dev server
+    3322, // Server API
+    13306 // MySQL (changed from 3306)
+  ],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "ms-vscode.vscode-node-azure-pack",
+        "eamodio.gitlens",
+        "vscode-icons-team.vscode-icons",
+        "ms-vscode.js-debug",
+        "christian-kohler.npm-intellisense",
+        "bradlc.vscode-tailwindcss"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.codeActionsOnSave": {
+          "source.fixAll.eslint": true
+        },
+        "javascript.updateImportsOnFileMove.enabled": "always",
+        "typescript.updateImportsOnFileMove.enabled": "always"
+      }
+    }
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "lts"
+    }
+  },
+  "postCreateCommand": "cd /workspace && npm install -g pm2 && cd client && npm install && cd ../server && npm install"
+}
