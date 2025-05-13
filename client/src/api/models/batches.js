@@ -1,4 +1,4 @@
-import axiosInstance from '../axiosConfig';
+import axiosInstance from "../axiosConfig";
 
 /**
  * API module for batch-related operations
@@ -21,7 +21,7 @@ import axiosInstance from '../axiosConfig';
  * Valid batch directions
  * @type {Array<string>}
  */
-const VALID_DIRECTIONS = ['incoming', 'outgoing'];
+const VALID_DIRECTIONS = ["incoming", "outgoing"];
 
 /**
  * Validates batch direction parameter
@@ -31,7 +31,9 @@ const VALID_DIRECTIONS = ['incoming', 'outgoing'];
  */
 const validateDirection = (direction) => {
   if (!direction || !VALID_DIRECTIONS.includes(direction)) {
-    throw new Error(`Valid direction (${VALID_DIRECTIONS.join(' or ')}) is required`);
+    throw new Error(
+      `Valid direction (${VALID_DIRECTIONS.join(" or ")}) is required`
+    );
   }
 };
 
@@ -43,13 +45,13 @@ const validateDirection = (direction) => {
  */
 const validateBatchId = (batchId) => {
   if (!batchId) {
-    throw new Error('Batch ID is required');
+    throw new Error("Batch ID is required");
   }
 };
 
 /**
  * Fetches batch status information from the server
- * 
+ *
  * @async
  * @param {BatchStatusFilters} [filters={}] - Optional filters for the batch status query
  * @returns {Promise<Object>} The batch status data
@@ -58,28 +60,30 @@ const validateBatchId = (batchId) => {
 export const fetchBatchStatus = async (filters = {}) => {
   try {
     // Extract filter parameters
-    const { incomingStatus, outgoingStatus, channel, ...otherFilters } = filters;
+    const { incomingStatus, outgoingStatus, channel, nodeId, ...otherFilters } =
+      filters;
 
     // Build query parameters object
     const params = {
       ...otherFilters,
       ...(incomingStatus && { incomingStatus }),
       ...(outgoingStatus && { outgoingStatus }),
-      ...(channel && { channel })
+      ...(channel && { channel }),
+      ...(nodeId && { nodeId }),
     };
 
     // Make API request
-    const response = await axiosInstance.get('/batch/status', { params });
+    const response = await axiosInstance.get("/batch/status", { params });
     return response.data || response;
   } catch (error) {
-    console.error('Error fetching batch status:', error.message);
+    console.error("Error fetching batch status:", error.message);
     throw error;
   }
 };
 
 /**
  * Fetches detailed information for a specific batch
- * 
+ *
  * @async
  * @param {string|number} batchId - The ID of the batch to fetch details for
  * @param {string} direction - The direction of the batch ('incoming' or 'outgoing')
@@ -101,7 +105,7 @@ export const fetchBatchDetails = async (batchId, direction) => {
 
 /**
  * Fetches sym_data entries associated with a specific batch
- * 
+ *
  * @async
  * @param {string|number} batchId - The ID of the batch to fetch data entries for
  * @param {string} direction - The direction of the batch ('incoming' or 'outgoing')
@@ -114,11 +118,14 @@ export const fetchBatchData = async (batchId, direction) => {
     validateDirection(direction);
 
     const response = await axiosInstance.get(`/batch/${batchId}/data`, {
-      params: { direction }
+      params: { direction },
     });
     return response.data || response;
   } catch (error) {
-    console.error(`Error fetching data for ${direction} batch ${batchId}:`, error.message);
+    console.error(
+      `Error fetching data for ${direction} batch ${batchId}:`,
+      error.message
+    );
     throw error;
   }
 };

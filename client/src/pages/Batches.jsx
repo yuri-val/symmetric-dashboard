@@ -1,31 +1,32 @@
-import { useState, useEffect, useContext, useCallback } from 'react';
-import { Box, Container, Paper, Grid } from '@mui/material';
-import { motion } from 'framer-motion';
-import PropTypes from 'prop-types';
-import { ThemeContext } from '../context/ThemeContext';
-import { fetchBatchStatus } from '../api/models/batches';
-import BatchTabs from '../components/batches/BatchTabs';
-import BatchTable from '../components/batches/BatchTable';
-import StatusFilterChips from '../components/batches/StatusFilterChips';
-import ChannelFilterChips from '../components/batches/ChannelFilterChips';
+import { useState, useEffect, useContext, useCallback } from "react";
+import { Box, Container, Paper, Grid, Typography } from "@mui/material";
+import { motion } from "framer-motion";
+import PropTypes from "prop-types";
+import { ThemeContext } from "../context/ThemeContext";
+import { fetchBatchStatus } from "../api/models/batches";
+import BatchTabs from "../components/batches/BatchTabs";
+import BatchTable from "../components/batches/BatchTable";
+import StatusFilterChips from "../components/batches/StatusFilterChips";
+import ChannelFilterChips from "../components/batches/ChannelFilterChips";
+import NodeFilterChips from "../components/batches/NodeFilterChips";
 
-import './Batches.css';
+import "./Batches.css";
 
 // Animation variants
 const pageVariants = {
   initial: { opacity: 0 },
-  animate: { 
+  animate: {
     opacity: 1,
-    transition: { 
+    transition: {
       duration: 0.5,
-      staggerChildren: 0.1 
-    }
-  }
+      staggerChildren: 0.1,
+    },
+  },
 };
 
 const itemVariants = {
   initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0 }
+  animate: { opacity: 1, y: 0 },
 };
 /**
  * Batches page component that displays batch status and data
@@ -40,7 +41,8 @@ function Batches() {
   const [selectedFilters, setSelectedFilters] = useState({
     incoming: null,
     outgoing: null,
-    channel: null
+    channel: null,
+    nodeId: null,
   });
   const { theme } = useContext(ThemeContext);
 
@@ -50,21 +52,22 @@ function Batches() {
       const data = await fetchBatchStatus({
         incomingStatus: selectedFilters.incoming,
         outgoingStatus: selectedFilters.outgoing,
-        channel: selectedFilters.channel
+        channel: selectedFilters.channel,
+        nodeId: selectedFilters.nodeId,
       });
 
       setBatches({
         incoming: data?.incoming || [],
-        outgoing: data?.outgoing || []
+        outgoing: data?.outgoing || [],
       });
 
       // Use stats directly from the API response
       setStats({
         incoming: data?.stats?.incoming || {},
-        outgoing: data?.stats?.outgoing || {}
+        outgoing: data?.stats?.outgoing || {},
       });
     } catch (error) {
-      console.error('Error fetching batches:', error);
+      console.error("Error fetching batches:", error);
       setError(error.message);
       setBatches({ incoming: [], outgoing: [] });
       setStats({ incoming: {}, outgoing: {} });
@@ -82,49 +85,69 @@ function Batches() {
   }, []);
 
   const handleStatusClick = useCallback((direction, status) => {
-    setSelectedFilters(prev => {
+    setSelectedFilters((prev) => {
       // If the same status is clicked again, toggle it off
       if (prev[direction] === status) {
         return {
           ...prev,
-          [direction]: null
+          [direction]: null,
         };
       }
       // Otherwise, set the new status filter
       return {
         ...prev,
-        [direction]: status
+        [direction]: status,
       };
     });
   }, []);
 
   const handleChannelSelect = useCallback((channelId) => {
-    setSelectedFilters(prev => {
+    setSelectedFilters((prev) => {
       // If the same channel is clicked again, toggle it off
       if (prev.channel === channelId) {
         return {
           ...prev,
-          channel: null
+          channel: null,
         };
       }
       // Otherwise, set the new channel filter
       return {
         ...prev,
-        channel: channelId
+        channel: channelId,
+      };
+    });
+  }, []);
+
+  const handleNodeSelect = useCallback((nodeId) => {
+    setSelectedFilters((prev) => {
+      // If the same node is clicked again, toggle it off
+      if (prev.nodeId === nodeId) {
+        return {
+          ...prev,
+          nodeId: null,
+        };
+      }
+      // Otherwise, set the new node filter
+      return {
+        ...prev,
+        nodeId,
       };
     });
   }, []);
 
   const renderErrorMessage = () => (
     <motion.div variants={itemVariants}>
-      <Paper 
-        elevation={2} 
-        sx={{ 
-          p: 2, 
-          mb: 3, 
-          backgroundColor: theme === 'dark' ? 'rgba(30, 30, 30, 0.8)' : 'rgba(255, 255, 255, 0.8)',
-          borderLeft: '4px solid',
-          borderColor: 'error.main'
+      <Paper
+        elevation={2}
+        sx={{
+          p: 2,
+          mb: 3,
+          backgroundColor:
+            theme === "dark"
+              ? "rgba(30, 30, 30, 0.8)"
+              : "rgba(255, 255, 255, 0.8)",
+          borderLeft: "4px solid",
+          borderColor: "error.main",
         }}
       >
         <Typography color="error" gutterBottom>
@@ -135,94 +158,107 @@ function Batches() {
   );
 
   const renderBatchContent = () => (
-    <Box sx={{ width: '100%' }}>
-      
+    <Box sx={{ width: "100%" }}>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        {/* First row of filters: Channel and Node */}
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "row",
+            gap: 2,
+            "& > *": {
+              flex: 1,
+            },
+          }}
+        >
+          <motion.div variants={itemVariants}>
+            <NodeFilterChips
+              selectedNodeId={selectedFilters.nodeId}
+              onNodeSelect={handleNodeSelect}
+            />
+          </motion.div>
+        </Box>
 
-      <Box sx={{ 
-        display: 'flex', 
-        flexDirection: 'row', 
-        justifyContent: 'space-between',
-        gap: 2, 
-        mb: 3,
-        '& > *': {
-          flex: 1
-        }
-      }}>
-        <motion.div variants={itemVariants}>
-          <ChannelFilterChips
-            selectedChannel={selectedFilters.channel}
-            onChannelSelect={handleChannelSelect}
-          />
-        </motion.div>
+        {/* Second row of filters: Status filters */}
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "row",
+            gap: 2,
+            "& > *": {
+              flex: 1,
+            },
+          }}
+        >
+          <motion.div variants={itemVariants}>
+            <ChannelFilterChips
+              selectedChannel={selectedFilters.channel}
+              onChannelSelect={handleChannelSelect}
+            />
+          </motion.div>
 
-        <motion.div variants={itemVariants}>
-          <StatusFilterChips
-            stats={stats}
-            direction="outgoing"
-            title="OUT"
-            selectedStatus={selectedFilters.outgoing}
-            onStatusClick={handleStatusClick}
-          />
-        </motion.div>
-        <motion.div variants={itemVariants}>
-          <StatusFilterChips
-            stats={stats}
-            direction="incoming"
-            title="IN"
-            selectedStatus={selectedFilters.incoming}
-            onStatusClick={handleStatusClick}
-          />
-        </motion.div>
+          <motion.div variants={itemVariants}>
+            <StatusFilterChips
+              stats={stats}
+              direction="outgoing"
+              title="OUT"
+              selectedStatus={selectedFilters.outgoing}
+              onStatusClick={handleStatusClick}
+            />
+          </motion.div>
+          <motion.div variants={itemVariants}>
+            <StatusFilterChips
+              stats={stats}
+              direction="incoming"
+              title="IN"
+              selectedStatus={selectedFilters.incoming}
+              onStatusClick={handleStatusClick}
+            />
+          </motion.div>
+        </Box>
       </Box>
 
       <motion.div variants={itemVariants}>
-        <BatchTabs 
-          batches={batches} 
-          onTabChange={handleTabChange} 
-        />
+        <BatchTabs batches={batches} onTabChange={handleTabChange} />
       </motion.div>
 
       <motion.div variants={itemVariants}>
         {tabValue === 0 && (
-          <BatchTable 
-            batchList={batches.outgoing || []} 
-            direction="outgoing" 
-          />
+          <BatchTable batchList={batches.outgoing || []} direction="outgoing" />
         )}
         {tabValue === 1 && (
-          <BatchTable 
-            batchList={batches.incoming || []} 
-            direction="incoming" 
-          />
+          <BatchTable batchList={batches.incoming || []} direction="incoming" />
         )}
       </motion.div>
     </Box>
   );
   return (
     <Container maxWidth="xl">
-      <motion.div
-        initial="initial"
-        animate="animate"
-        variants={pageVariants}
-      >
+      <motion.div initial="initial" animate="animate" variants={pageVariants}>
         {error ? renderErrorMessage() : renderBatchContent()}
       </motion.div>
     </Container>
   );
 }
 
-
 BatchTabs.propTypes = {
   batches: PropTypes.shape({
     incoming: PropTypes.array,
-    outgoing: PropTypes.array
+    outgoing: PropTypes.array,
   }).isRequired,
-  onTabChange: PropTypes.func.isRequired
+  onTabChange: PropTypes.func.isRequired,
 };
 
 BatchTable.propTypes = {
   batchList: PropTypes.array.isRequired,
-  direction: PropTypes.oneOf(['incoming', 'outgoing']).isRequired
+  direction: PropTypes.oneOf(["incoming", "outgoing"]).isRequired,
 };
 
 export default Batches;
