@@ -3,13 +3,13 @@
  * @description Service for handling batch-related operations and data retrieval
  * @author Yuri V
  */
-const logger = require('../logger');
-const DatabaseRepository = require('../repositories/database.repository');
-const BatchStatusService = require('./batch-status.service');
-const BatchDataService = require('./batch-data.service');
-const QueryBuilder = require('../utils/query-builder');
-const { DIRECTION } = require('../constants/batch.constants');
-const { transformBatch } = require('../transformers/batch.transformer');
+const logger = require("../logger");
+const DatabaseRepository = require("../repositories/database.repository");
+const BatchStatusService = require("./batch-status.service");
+const BatchDataService = require("./batch-data.service");
+const QueryBuilder = require("../utils/query-builder");
+const { DIRECTION } = require("../constants/batch.constants");
+const { transformBatch } = require("../transformers/batch.transformer");
 
 /**
  * Service class for batch operations
@@ -23,13 +23,13 @@ class BatchService {
    */
   constructor(config) {
     if (!config) {
-      throw new Error('Database configuration is required');
+      throw new Error("Database configuration is required");
     }
     this.database = new DatabaseRepository(config);
     this.batchStatusService = new BatchStatusService(this.database);
     this.batchDataService = new BatchDataService(this.database);
   }
-  
+
   /**
    * Retrieves unique channel IDs from both incoming and outgoing batches
    * @async
@@ -66,10 +66,12 @@ class BatchService {
   async fetchBatchAdditionalData(batchId, direction) {
     // For outgoing batches, fetch data events
     if (direction === DIRECTION.OUTGOING) {
-      const dataEvents = await this.batchDataService.fetchBatchDataEvents(batchId);
+      const dataEvents = await this.batchDataService.fetchBatchDataEvents(
+        batchId
+      );
       return { dataEvents };
     }
-    
+
     // For incoming batches, we might want to fetch different related data
     // This can be customized based on requirements
     return {};
@@ -85,42 +87,54 @@ class BatchService {
    */
   async getBatchDetails(batchId, direction) {
     try {
-      logger.debug('Getting batch details', { batchId, direction });
+      logger.debug("Getting batch details", { batchId, direction });
       this.validateDirection(direction);
       const normalizedDirection = direction.toLowerCase();
-      
+
       const queryBuilder = new QueryBuilder(`sym_${normalizedDirection}_batch`)
-        .where('batch_id = ?', batchId)
+        .where("batch_id = ?", batchId)
         .limitTo(1);
-      
+
       const { query, params } = queryBuilder.build();
-      
+
       const results = await this.database.executeQuery(query, params);
-      
+
       if (!results || results.length === 0) {
-        logger.debug('No batch found with provided ID', { batchId, direction: normalizedDirection });
+        logger.debug("No batch found with provided ID", {
+          batchId,
+          direction: normalizedDirection,
+        });
         return null;
       }
-      
+
       // Transform the basic batch data
-      const batchData = BatchService.transformBatch(results[0]);
-      
+      const batchData = transformBatch(results[0]);
+
       // Fetch additional data related to this batch
-      logger.debug('Fetching additional batch data', { batchId, direction: normalizedDirection });
-      const additionalData = await this.fetchBatchAdditionalData(batchId, normalizedDirection);
-      
+      logger.debug("Fetching additional batch data", {
+        batchId,
+        direction: normalizedDirection,
+      });
+      const additionalData = await this.fetchBatchAdditionalData(
+        batchId,
+        normalizedDirection
+      );
+
       // Combine the data
-      logger.debug('Batch details retrieved successfully', { batchId, direction: normalizedDirection });
+      logger.debug("Batch details retrieved successfully", {
+        batchId,
+        direction: normalizedDirection,
+      });
       return {
         ...batchData,
-        ...additionalData
+        ...additionalData,
       };
     } catch (error) {
-      logger.error('Error in getBatchDetails', { 
-        batchId, 
+      logger.error("Error in getBatchDetails", {
+        batchId,
         direction,
         error: error.message,
-        stack: error.stack
+        stack: error.stack,
       });
       throw error;
     }
@@ -140,7 +154,7 @@ class BatchService {
       const dataEvents = await this.fetchBatchDataEvents(batchId);
       return { dataEvents };
     }
-    
+
     // For incoming batches, we might want to fetch different related data
     // This can be customized based on requirements
     return {};
@@ -155,30 +169,33 @@ class BatchService {
    */
   async fetchBatchDataEvents(batchId) {
     try {
-      logger.debug('Fetching batch data events', { batchId });
-      
-      const queryBuilder = new QueryBuilder('sym_data_event')
-        .where('batch_id = ?', batchId)
-        .order('data_id')
+      logger.debug("Fetching batch data events", { batchId });
+
+      const queryBuilder = new QueryBuilder("sym_data_event")
+        .where("batch_id = ?", batchId)
+        .order("data_id")
         .limitTo(100);
-      
+
       const { query, params } = queryBuilder.build();
-      
+
       const results = await this.database.executeQuery(query, params);
-      
-      logger.debug('Batch data events retrieved', { batchId, count: results.length });
-      return results.map(event => ({
+
+      logger.debug("Batch data events retrieved", {
+        batchId,
+        count: results.length,
+      });
+      return results.map((event) => ({
         dataId: event.data_id,
         batchId: event.batch_id,
         routerId: event.router_id,
         createTime: event.create_time,
-        tableId: event.table_name
+        tableId: event.table_name,
       }));
     } catch (error) {
-      logger.error('Error fetching batch data events', { 
+      logger.error("Error fetching batch data events", {
         batchId,
         error: error.message,
-        stack: error.stack
+        stack: error.stack,
       });
       return [];
     }
@@ -191,7 +208,10 @@ class BatchService {
    * @throws {Error} If direction is invalid
    */
   validateDirection(direction) {
-    if (!direction || !Object.values(DIRECTION).includes(direction.toLowerCase())) {
+    if (
+      !direction ||
+      !Object.values(DIRECTION).includes(direction.toLowerCase())
+    ) {
       throw new Error(`Invalid direction parameter: ${direction}`);
     }
   }
@@ -206,25 +226,31 @@ class BatchService {
    */
   async getBatchData(batchId, direction) {
     try {
-      logger.debug('Getting batch data', { batchId, direction });
+      logger.debug("Getting batch data", { batchId, direction });
       this.validateDirection(direction);
       const normalizedDirection = direction.toLowerCase();
-      
+
       // First verify the batch exists
-      const batchExists = await this.batchDataService.batchExists(batchId, normalizedDirection);
-      
+      const batchExists = await this.batchDataService.batchExists(
+        batchId,
+        normalizedDirection
+      );
+
       if (!batchExists) {
-        logger.debug('Batch does not exist, returning empty data array', { batchId, direction: normalizedDirection });
+        logger.debug("Batch does not exist, returning empty data array", {
+          batchId,
+          direction: normalizedDirection,
+        });
         return [];
       }
-      
+
       return this.batchDataService.getBatchData(batchId);
     } catch (error) {
-      logger.error('Error fetching batch data', { 
-        batchId, 
+      logger.error("Error fetching batch data", {
+        batchId,
         direction,
         error: error.message,
-        stack: error.stack
+        stack: error.stack,
       });
       throw error;
     }
