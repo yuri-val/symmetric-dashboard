@@ -3,15 +3,15 @@
  * @description Controller for handling batch-related HTTP requests
  * @author Yuri V
  */
-const BatchService = require('../services/batch.service');
-const logger = require('../logger');
+const BatchService = require("../services/batch.service");
+const logger = require("../logger");
 
 /**
  * Valid batch directions
  * @constant {string[]}
  * @private
  */
-const VALID_DIRECTIONS = ['incoming', 'outgoing'];
+const VALID_DIRECTIONS = ["incoming", "outgoing"];
 
 /**
  * Controller class for batch-related endpoints
@@ -25,7 +25,7 @@ class BatchController {
    */
   constructor(config) {
     if (!config) {
-      throw new Error('Database configuration is required');
+      throw new Error("Database configuration is required");
     }
     this.batchService = new BatchService(config);
   }
@@ -42,7 +42,7 @@ class BatchController {
       const channels = await this.batchService.getUniqueChannels();
       res.json(channels);
     } catch (error) {
-      this.handleError(error, res, 'Failed to fetch unique channels');
+      this.handleError(error, res, "Failed to fetch unique channels");
     }
   }
 
@@ -54,22 +54,26 @@ class BatchController {
    * @param {string} [req.query.incomingStatus] - Filter for incoming batch status
    * @param {string} [req.query.outgoingStatus] - Filter for outgoing batch status
    * @param {string} [req.query.channel] - Filter batches by channel ID
+   * @param {string} [req.query.nodeId] - Filter batches by node ID
    * @param {Object} res - Express response object
    * @returns {Promise<void>} Sends JSON response with batch status data
    */
   async getBatchStatus(req, res) {
     try {
-      const { incomingStatus, outgoingStatus, channel } = req.query;
+      const { incomingStatus, outgoingStatus, channel, nodeId } = req.query;
 
       const batchStatus = await this.batchService.getBatchStatus({
         incomingStatus,
         outgoingStatus,
-        channel
+        channel,
+        nodeId,
       });
 
       res.json(batchStatus);
     } catch (error) {
-      this.handleError(error, res, 'Failed to fetch batch status', { query: req.query });
+      this.handleError(error, res, "Failed to fetch batch status", {
+        query: req.query,
+      });
     }
   }
 
@@ -87,7 +91,7 @@ class BatchController {
   async getBatchDetails(req, res) {
     try {
       const { batchId } = req.params;
-      const { direction = 'outgoing' } = req.query;
+      const { direction = "outgoing" } = req.query;
 
       // Validate input parameters
       const validationError = this.validateBatchParams(batchId, direction);
@@ -95,18 +99,23 @@ class BatchController {
         return res.status(400).json(validationError);
       }
 
-      const batchDetails = await this.batchService.getBatchDetails(batchId, direction);
+      const batchDetails = await this.batchService.getBatchDetails(
+        batchId,
+        direction
+      );
 
       if (!batchDetails) {
-        return res.status(404).json({ 
-          error: 'Batch not found',
-          message: `No ${direction} batch found with ID ${batchId}`
+        return res.status(404).json({
+          error: "Batch not found",
+          message: `No ${direction} batch found with ID ${batchId}`,
         });
       }
 
       res.json(batchDetails);
     } catch (error) {
-      this.handleError(error, res, 'Failed to fetch batch details', { params: req.params });
+      this.handleError(error, res, "Failed to fetch batch details", {
+        params: req.params,
+      });
     }
   }
 
@@ -124,16 +133,22 @@ class BatchController {
   async getBatchData(req, res) {
     try {
       const { batchId } = req.params;
-      const { direction = 'outgoing' } = req.query;
+      const { direction = "outgoing" } = req.query;
       const normalizedDirection = direction.toLowerCase();
 
       // Validate input parameters
-      const validationError = this.validateBatchParams(batchId, normalizedDirection);
+      const validationError = this.validateBatchParams(
+        batchId,
+        normalizedDirection
+      );
       if (validationError) {
         return res.status(400).json(validationError);
       }
 
-      const batchData = await this.batchService.getBatchData(batchId, normalizedDirection);
+      const batchData = await this.batchService.getBatchData(
+        batchId,
+        normalizedDirection
+      );
 
       if (!batchData || batchData.length === 0) {
         return res.json([]); // Return empty array if no data found
@@ -141,9 +156,9 @@ class BatchController {
 
       res.json(batchData);
     } catch (error) {
-      this.handleError(error, res, 'Failed to fetch batch data', {
+      this.handleError(error, res, "Failed to fetch batch data", {
         params: req.params,
-        query: req.query
+        query: req.query,
       });
     }
   }
@@ -158,17 +173,19 @@ class BatchController {
   validateBatchParams(batchId, direction) {
     // Validate direction parameter
     if (!direction || !VALID_DIRECTIONS.includes(direction.toLowerCase())) {
-      return { 
-        error: 'Invalid direction parameter',
-        message: `Direction must be either "${VALID_DIRECTIONS.join('" or "')}"` 
+      return {
+        error: "Invalid direction parameter",
+        message: `Direction must be either "${VALID_DIRECTIONS.join(
+          '" or "'
+        )}"`,
       };
     }
 
     // Validate batchId parameter
     if (!batchId || isNaN(parseInt(batchId, 10))) {
-      return { 
-        error: 'Invalid batch ID',
-        message: 'Batch ID must be a valid number'
+      return {
+        error: "Invalid batch ID",
+        message: "Batch ID must be a valid number",
       };
     }
 
@@ -184,14 +201,15 @@ class BatchController {
    * @param {Object} [logContext={}] - Additional context for logging
    */
   handleError(error, res, defaultMessage, logContext = {}) {
-    logger.error(`${defaultMessage}: ${error.message}`, { 
+    logger.error(`${defaultMessage}: ${error.message}`, {
       stack: error.stack,
-      ...logContext
+      ...logContext,
     });
 
-    res.status(500).json({ 
+    res.status(500).json({
       error: defaultMessage,
-      message: process.env.NODE_ENV === 'development' ? error.message : undefined
+      message:
+        process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 }
