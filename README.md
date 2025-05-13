@@ -12,6 +12,10 @@ SymmetricDS Dashboard is a full-stack application that connects to a SymmetricDS
 - **Node Management**: View detailed information about all nodes in your SymmetricDS network
 - **Batch Monitoring**: Track incoming and outgoing batches with status information
 - **Configuration**: View and manage SymmetricDS configuration settings
+- **Real-time Updates**: Automatic data refresh with 30-second polling interval
+- **Responsive Design**: Modern UI that adapts to different screen sizes
+- **Theme Support**: Toggle between light and dark modes for optimal viewing experience
+- **Error Handling**: Robust error boundaries and friendly error messages
 
 ## Architecture
 
@@ -22,14 +26,19 @@ The application consists of two main components:
 - Node.js Express server that connects to the SymmetricDS meta database
 - RESTful API endpoints for retrieving node and batch information
 - Structured with controllers, services, and repositories for clean separation of concerns
+- Optimized database queries with advanced error handling and query logging
+- Modular service design for different data processing tasks
 
 ### Frontend (Client)
 
-- React application built with Vite
+- React application built with Vite for fast development and optimized production builds
 - Material UI for consistent, responsive design
-- React Router for navigation
-- Recharts for data visualization
-- Axios for API communication
+- React Router for seamless client-side navigation
+- Recharts for interactive data visualization
+- Axios for API communication with request/response interceptors
+- Framer Motion for smooth animations and transitions
+- React Error Boundary for graceful error handling
+- TanStack React Query for efficient data fetching, caching, and state management
 
 ## System Requirements
 
@@ -183,13 +192,16 @@ Once running, access the dashboard at:
 
 ## API Endpoints
 
-The server provides the following API endpoints:
+The server provides the following RESTful API endpoints:
 
 - `GET /health` - Health check endpoint
 - `GET /api/node/status` - Get node status statistics
 - `GET /api/node/nodes` - Get list of all nodes
 - `GET /api/engine/config` - Get configuration (node groups, channels, and triggers)
+- `GET /api/batch/channels` - Get unique batch channel IDs
 - `GET /api/batch/status` - Get batch processing status
+- `GET /api/batch/:batchId/data` - Get data entries associated with a specific batch
+- `GET /api/batch/:direction/:batchId` - Get detailed information for a specific batch (incoming or outgoing)
 
 ## Technology Stack
 
@@ -203,16 +215,19 @@ The server provides the following API endpoints:
 ### Frontend
 - React 18
 - Vite (build tool)
-- Material UI
-- React Router
+- Material UI 5
+- React Router 6
 - Recharts (for charts and visualizations)
 - Axios (for API requests)
 - TanStack React Query (for data fetching and caching)
+- Framer Motion (for animations and transitions)
+- React Error Boundary (for graceful error handling)
 
 ### Deployment
 - Docker
 - Nginx (for serving the frontend and proxying API requests)
 - PM2 (for process management in production)
+- Alpine-based Node.js container for minimal image size
 
 ## Project Structure
 
@@ -221,16 +236,30 @@ The server provides the following API endpoints:
 │   ├── public/             # Static assets
 │   └── src/                # React source code
 │       ├── api/            # API client functions
+│       │   ├── axiosConfig.js  # Axios configuration with interceptors
+│       │   └── models/     # API model functions by domain
 │       ├── components/     # Reusable UI components
+│       │   ├── batches/    # Batch-related components
+│       │   ├── configuration/ # Configuration-related components
+│       │   ├── dashboard/  # Dashboard-specific components
+│       │   └── nodes/      # Node-related components
+│       ├── context/        # React contexts (e.g., ThemeContext)
 │       ├── pages/          # Page components
+│       ├── theme/          # Theme and styling
 │       ├── App.jsx         # Main application component
 │       └── main.jsx        # Application entry point
 ├── server/                 # Backend Node.js application
+│   ├── logs/               # Server logs
 │   └── src/                # Server source code
+│       ├── constants/      # Application constants
 │       ├── controllers/    # API route handlers
 │       ├── repositories/   # Database access layer
-│       ├── services/       # Business logic
-│       └── index.js        # Server entry point
+│       ├── services/       # Business logic by domain
+│       ├── transformers/   # Data transformation utilities
+│       ├── utils/          # Utility functions
+│       ├── index.js        # Server entry point
+│       └── logger.js       # Logging utility
+├── diff/                   # Differential files (for development)
 ├── .github/                # GitHub workflows
 ├── Dockerfile              # Docker build configuration
 ├── docker-compose.example.yml # Example Docker Compose configuration
@@ -246,15 +275,24 @@ The server provides the following API endpoints:
    - Verify your database credentials in the .env file
    - Ensure the SymmetricDS database is running and accessible
    - Check network connectivity between the application and database
+   - Review logs in the server/logs directory for SQL errors
 
 2. **Docker Deployment Issues**
    - Ensure ports 13322 and 13333 are not in use by other applications
    - Verify Docker and Docker Compose are installed correctly
    - Check Docker logs: `docker logs symmetric-dashboard`
+   - Inspect Nginx logs in container: `docker exec symmetric-dashboard cat /var/log/nginx/error.log`
 
 3. **Development Server Issues**
    - Clear node_modules and reinstall dependencies if you encounter module errors
-   - Ensure you're using a compatible Node.js version
+   - Ensure you're using a compatible Node.js version (v14 or higher)
+   - Check for React development mode warnings in browser console
+   - Verify Vite configuration in client/vite.config.js
+
+4. **UI Performance Issues**
+   - Large batch tables might cause slowdowns - consider filtering data
+   - Disable animations if performance is an issue on low-end devices
+   - Check browser console for memory warnings
 
 ## Security Considerations
 
@@ -262,6 +300,19 @@ The server provides the following API endpoints:
 - Consider placing the application behind a reverse proxy with authentication
 - Never expose the dashboard directly to the internet without proper security measures
 - Use environment variables for all sensitive configuration and never commit credentials
+- Consider implementing rate limiting for production deployments
+- Review the database user permissions - use a read-only user for the dashboard when possible
+- In production environments, consider implementing HTTPS using a reverse proxy
+
+## Performance Optimization
+
+The SymmetricDS Dashboard has been optimized for performance in several ways:
+
+1. **Code Splitting**: React components are lazy-loaded to reduce initial bundle size
+2. **Efficient Rendering**: Components use memoization to prevent unnecessary re-renders
+3. **Optimized Database Queries**: The server uses efficient SQL queries with proper indexing
+4. **Data Caching**: TanStack React Query provides automatic caching of API responses
+5. **Dynamic Loading**: Data is fetched only when needed and displayed with loading states
 
 ## License
 
@@ -270,3 +321,11 @@ The server provides the following API endpoints:
 ## Contributing
 
 [Add contribution guidelines here]
+
+## Release Notes
+
+### Version 1.0.0 (May 2025)
+- Initial release with core dashboard functionality
+- Support for monitoring nodes and batches
+- Configuration viewing capabilities
+- Docker deployment options
