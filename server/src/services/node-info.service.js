@@ -27,16 +27,16 @@ class NodeInfoService {
   async getNodeStatusStats() {
     try {
       logger.debug('Fetching node status statistics');
-      
+
       const nodes = await this.database.getNodes();
       const formattedNodes = this.formatNodes(nodes);
-      
+
       const stats = {
         total: formattedNodes.length,
         online: formattedNodes.filter(node => node.status === 'ONLINE').length,
         offline: formattedNodes.filter(node => node.status === 'OFFLINE').length
       };
-      
+
       logger.debug('Node status statistics retrieved successfully', stats);
       return stats;
     } catch (error) {
@@ -55,10 +55,10 @@ class NodeInfoService {
   async getNodesInfo() {
     try {
       logger.debug('Fetching detailed node information');
-      
+
       const nodes = await this.database.getNodes();
       const formattedNodes = this.formatNodes(nodes);
-      
+
       logger.debug('Node information retrieved successfully', { count: nodes.length });
       return formattedNodes;
     } catch (error) {
@@ -86,8 +86,9 @@ class NodeInfoService {
   extractVesselName(nodeGroupId, description) {
     if (!nodeGroupId?.startsWith('vessel_') || !description) return null;
     const match = description.match(/Node Group for ([^\d]+).*vessel/);
-    const name =  match ? match[1].trim() : null;
-    return name.toString().toUpperCase().replace(/_/g, ' ');
+    const name = match ? match[1].trim() : null;
+    // Only attempt to call toString() if name is not null
+    return name ? name.toString().toUpperCase().replace(/_/g, ' ') : null;
   }
 
   /**
