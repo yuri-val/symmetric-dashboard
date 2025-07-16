@@ -3,7 +3,7 @@
  * @description Service for handling detailed node information operations
  * @author Yuri V
  */
-const logger = require('../logger');
+const logger = require("../logger");
 
 /** Time threshold to consider a node offline (30 minutes in milliseconds) */
 const DEAD_NODE_THRESHOLD = 30 * 60 * 1000;
@@ -15,7 +15,7 @@ class NodeInfoService {
    */
   constructor(database) {
     if (!database) {
-      throw new Error('Database instance is required');
+      throw new Error("Database instance is required");
     }
     this.database = database;
   }
@@ -26,23 +26,25 @@ class NodeInfoService {
    */
   async getNodeStatusStats() {
     try {
-      logger.debug('Fetching node status statistics');
+      logger.debug("Fetching node status statistics");
 
       const nodes = await this.database.getNodes();
       const formattedNodes = this.formatNodes(nodes);
 
       const stats = {
         total: formattedNodes.length,
-        online: formattedNodes.filter(node => node.status === 'ONLINE').length,
-        offline: formattedNodes.filter(node => node.status === 'OFFLINE').length
+        online: formattedNodes.filter((node) => node.status === "ONLINE")
+          .length,
+        offline: formattedNodes.filter((node) => node.status === "OFFLINE")
+          .length,
       };
 
-      logger.debug('Node status statistics retrieved successfully', stats);
+      logger.debug("Node status statistics retrieved successfully", stats);
       return stats;
     } catch (error) {
-      logger.error('Error fetching node status statistics', {
+      logger.error("Error fetching node status statistics", {
         error: error.message,
-        stack: error.stack
+        stack: error.stack,
       });
       throw error;
     }
@@ -54,17 +56,19 @@ class NodeInfoService {
    */
   async getNodesInfo() {
     try {
-      logger.debug('Fetching detailed node information');
+      logger.debug("Fetching detailed node information");
 
       const nodes = await this.database.getNodes();
       const formattedNodes = this.formatNodes(nodes);
 
-      logger.debug('Node information retrieved successfully', { count: nodes.length });
+      logger.debug("Node information retrieved successfully", {
+        count: nodes.length,
+      });
       return formattedNodes;
     } catch (error) {
-      logger.error('Error fetching node information', {
+      logger.error("Error fetching node information", {
         error: error.message,
-        stack: error.stack
+        stack: error.stack,
       });
       throw error;
     }
@@ -84,11 +88,11 @@ class NodeInfoService {
    * @returns {string|null} Vessel name or null if not found
    */
   extractVesselName(nodeGroupId, description) {
-    if (!nodeGroupId?.startsWith('vessel_') || !description) return null;
+    if (!nodeGroupId?.startsWith("vessel_") || !description) return null;
     const match = description.match(/Node Group for ([^\d]+).*vessel/);
     const name = match ? match[1].trim() : null;
     // Only attempt to call toString() if name is not null
-    return name ? name.toString().toUpperCase().replace(/_/g, ' ') : null;
+    return name ? name.toString().toUpperCase().replace(/_/g, " ") : null;
   }
 
   /**
@@ -99,9 +103,10 @@ class NodeInfoService {
    */
   formatNodes(nodes) {
     const now = Date.now();
-    return nodes.map(node => ({
+    return nodes.map((node) => ({
       nodeId: node.node_id,
       nodeGroupId: node.node_group_id,
+      groupDescription: node.node_group_description,
       externalId: node.external_id,
       syncUrl: node.sync_url,
       status: this.getNodeStatus(node.heartbeat_time, now),
@@ -114,7 +119,10 @@ class NodeInfoService {
       version: node.symmetric_version,
       batchInErrorCount: parseInt(node.batch_in_error_count, 10),
       batchToSendCount: parseInt(node.batch_to_send_count, 10),
-      vesselName: this.extractVesselName(node.node_group_id, node.node_group_description)
+      vesselName: this.extractVesselName(
+        node.node_group_id,
+        node.node_group_description
+      ),
     }));
   }
 
@@ -126,8 +134,10 @@ class NodeInfoService {
    * @returns {string} Node status
    */
   getNodeStatus(heartbeatTime, now) {
-    if (!heartbeatTime) return 'OFFLINE';
-    return (now - new Date(heartbeatTime).getTime() > DEAD_NODE_THRESHOLD) ? 'OFFLINE' : 'ONLINE';
+    if (!heartbeatTime) return "OFFLINE";
+    return now - new Date(heartbeatTime).getTime() > DEAD_NODE_THRESHOLD
+      ? "OFFLINE"
+      : "ONLINE";
   }
 
   /**
@@ -141,7 +151,7 @@ class NodeInfoService {
     return {
       free: node.free_memory_bytes,
       total: node.total_memory_bytes,
-      used: node.total_memory_bytes - node.free_memory_bytes
+      used: node.total_memory_bytes - node.free_memory_bytes,
     };
   }
 }

@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useContext, useMemo } from "react";
 import { Typography, Chip, Box, LinearProgress, Tooltip } from "@mui/material";
 import { motion } from "framer-motion";
 import { ThemeContext } from "../../context/ThemeContext";
@@ -21,6 +21,19 @@ const MotionNodeCard = motion.div;
 const NodeCard = ({ node, getStatusColor, formatMemoryUsage, formatDate }) => {
   const { theme } = useContext(ThemeContext);
 
+  const nodeName = useMemo(() => {
+    let name = node.groupDescription;
+    if (name.includes("Node Group for")) {
+      const match = name.match(/Node Group for (.*) .*(\d{7}).*/);
+      if (match) {
+        const vesselName = match[1];
+        const imo = match[2];
+        name = `${vesselName} (IMO: ${imo})`;
+      }
+    }
+    return name;
+  }, [node]);
+
   return (
     <MotionNodeCard
       className="bento-item"
@@ -35,6 +48,8 @@ const NodeCard = ({ node, getStatusColor, formatMemoryUsage, formatDate }) => {
       <Box
         sx={{ p: 3, height: "100%", display: "flex", flexDirection: "column" }}
       >
+        <Typography variant="overline">{nodeName}</Typography>
+
         <Box
           sx={{
             display: "flex",
